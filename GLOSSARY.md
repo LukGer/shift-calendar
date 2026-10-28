@@ -5,12 +5,16 @@ An alarm app for shift workers: it reads upcoming shifts from the calendar and s
 ## Language
 
 **Shift**:
-A calendar event the app recognises as a work shift.
+A work shift on one date, recognised from an all-day event in one of her chosen calendars whose title is a Shortcut.
 _Avoid_: Dienst, appointment, event (when meaning a recognised shift)
 
 **Shift Type**:
-A category of Shift (e.g. day shift, night shift), recognised from the event's title shortcut such as "td" or "nd".
-_Avoid_: Shift kind, shortcut (the shortcut is how a Shift Type is recognised, not the type itself)
+A category of Shift (e.g. day shift, night shift), recognised by its Shortcut.
+_Avoid_: Shift kind, shortcut (the Shortcut is how a Shift Type is recognised, not the type itself)
+
+**Shortcut**:
+The event title that identifies a Shift Type, such as "td" or "nd"; each Shift Type has exactly one.
+_Avoid_: Code, abbreviation, tag
 
 **Alarm Set**:
 The ordered group of alarms that belongs to one Shift Type.
