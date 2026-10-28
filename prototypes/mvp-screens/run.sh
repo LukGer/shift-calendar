@@ -4,7 +4,7 @@
 set -eu
 cd "$(dirname "$0")"
 APP=build/ShiftPrototype.app
-DEVICE=$(xcrun simctl list devices available | grep -m1 "${DEVICE_NAME:-iPhone 17 Pro} (" | grep -oE '[0-9A-F-]{36}')
+DEVICE=$(xcrun simctl list devices available | grep -m1 "${DEVICE_NAME:-iPhone}" | grep -oE "[0-9A-F-]{36}") || { echo "no available iPhone simulator" >&2; exit 1; }
 
 rm -rf build && mkdir -p "$APP"
 xcrun -sdk iphonesimulator swiftc -parse-as-library -target arm64-apple-ios26.0-simulator Sources/*.swift -o "$APP/ShiftPrototype"

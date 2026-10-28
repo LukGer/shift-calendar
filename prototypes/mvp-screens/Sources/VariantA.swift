@@ -68,7 +68,7 @@ private struct ShiftRowA: View {
     }
 }
 
-private struct SettingsA: View {
+struct SettingsA: View {
     @Environment(Store.self) private var store
     @Environment(\.dismiss) private var dismiss
     @State private var path: [Int]
@@ -164,7 +164,7 @@ private struct EditorA: View {
     }
 }
 
-private struct OnboardingA: View {
+struct OnboardingA: View {
     @Environment(Store.self) private var store
     @Environment(\.dismiss) private var dismiss
     @State private var page = UserDefaults.standard.integer(forKey: "page")

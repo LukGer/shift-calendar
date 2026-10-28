@@ -10,7 +10,7 @@ struct PrototypeApp: App {
     }
 }
 
-private let variants = [("A", "One list"), ("B", "Tabs"), ("C", "Week strip")]
+private let variants = [("A", "One list"), ("B", "Tabs"), ("C", "Week strip"), ("D", "B home + A rest")]
 
 struct VariantSwitcher: View {
     @AppStorage("variant") private var variant = "A"
@@ -63,6 +63,7 @@ private struct VariantHost: View {
             switch variant {
             case "B": VariantB(screen: screen)
             case "C": VariantC(screen: screen)
+            case "D": VariantD(screen: screen)
             default: VariantA(screen: screen)
             }
         }

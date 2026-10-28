@@ -25,8 +25,9 @@ struct VariantB: View {
     }
 }
 
-private struct NextB: View {
+struct NextB: View {
     @Environment(Store.self) private var store
+    var openSettings: (() -> Void)?
 
     var body: some View {
         NavigationStack {
@@ -48,6 +49,9 @@ private struct NextB: View {
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Next Shift")
+            .toolbar {
+                if let openSettings { Button("Settings", systemImage: "gearshape", action: openSettings) }
+            }
         }
     }
 }
