@@ -37,6 +37,7 @@ final class Arming {
             _ = await previousRun?.value
             let result = await arm()
             latestResult = result
+            BackgroundRefresh.schedule()
             return result
         }
         latestRun = thisRun

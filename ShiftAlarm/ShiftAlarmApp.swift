@@ -16,5 +16,8 @@ struct ShiftAlarmApp: App {
                 )
             }
         }
+        .backgroundTask(.appRefresh(BackgroundRefresh.identifier)) {
+            await Arming.shared.run()
+        }
     }
 }

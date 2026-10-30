@@ -1,5 +1,6 @@
 import Foundation
 import Testing
+@testable import ShiftAlarm
 
 struct AppIdentityTests {
     @Test(arguments: [
@@ -11,6 +12,14 @@ struct AppIdentityTests {
     ])
     func infoPlistValue(key: String, expected: String) {
         #expect(Bundle.main.object(forInfoDictionaryKey: key) as? String == expected)
+    }
+
+    @Test(arguments: [
+        ("BGTaskSchedulerPermittedIdentifiers", [BackgroundRefresh.identifier]),
+        ("UIBackgroundModes", ["fetch"]),
+    ])
+    func infoPlistList(key: String, expected: [String]) {
+        #expect(Bundle.main.object(forInfoDictionaryKey: key) as? [String] == expected)
     }
 
     @Test func runsOnIPhoneOnly() {
