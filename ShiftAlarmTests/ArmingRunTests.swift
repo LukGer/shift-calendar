@@ -22,7 +22,7 @@ struct ArmingRunTests {
 
     init() throws {
         let container = try ModelContainer(
-            for: ShiftType.self, ChosenCalendar.self, ArmingRecord.self,
+            for: ShiftType.self, ChosenCalendar.self, Skip.self, ArmingRecord.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)
         )
         self.container = container
@@ -340,7 +340,8 @@ struct ArmingRunTests {
     static func shifts(in result: ArmingResult) -> [String] {
         guard case .armed(let shifts) = result else { return [] }
         return shifts.map { shift in
-            ([String(text(shift.date).prefix(10)), shift.name] + shift.alarmTimes.map(\.text)).joined(separator: " ")
+            let rings = shift.isSkipped ? ["Skipped"] : shift.alarmTimes.map(\.text)
+            return ([String(text(shift.date).prefix(10)), shift.name] + rings).joined(separator: " ")
         }
     }
 

@@ -58,6 +58,8 @@ final class Arming {
 
     /// Changes no alarm unless it can see her calendars and is allowed to schedule alarms.
     private func arm(in context: ModelContext, now: Date) async throws -> ArmingResult {
+        let calendar = clock.calendar
+        try pruneSkips(before: calendar.startOfDay(for: now), in: context)
         let deviceCalendars = calendarReader.calendars()
         guard calendarReader.hasFullAccess, !deviceCalendars.isEmpty else { return .skipped(.calendarNotReadable) }
         let chosenCalendars = try context.fetch(FetchDescriptor<ChosenCalendar>())
@@ -65,7 +67,6 @@ final class Arming {
             return .skipped(.chosenCalendarMissing)
         }
         guard alarmScheduler.isAuthorized else { return .skipped(.alarmsNotAllowed) }
-        let calendar = clock.calendar
         let windowEnd = calendar.date(byAdding: .day, value: 7, to: now)!
         let events = calendarReader.events(
             inCalendars: chosenCalendars.map(\.identifier),
@@ -74,7 +75,9 @@ final class Arming {
         )
         let shifts = Shift.recognise(
             in: events, of: try context.fetch(FetchDescriptor<ShiftType>()), calendar: calendar)
-        let plan = ArmingPlan(shifts: shifts, now: now, windowEnd: windowEnd, calendar: calendar)
+        let plan = ArmingPlan(
+            shifts: shifts, skips: try context.fetch(FetchDescriptor<Skip>()),
+            now: now, windowEnd: windowEnd, calendar: calendar)
         try await armExactly(plan.wantedAlarms)
         await notifier.replaceStaleArmingNotification(firingAt: now.addingTimeInterval(48 * 60 * 60))
         return .armed(plan.shiftsInWindow)
@@ -93,6 +96,11 @@ final class Arming {
             record.lastArmed = now
         }
         try? context.save()
+    }
+
+    private func pruneSkips(before today: Date, in context: ModelContext) throws {
+        try context.fetch(FetchDescriptor<Skip>(predicate: #Predicate { $0.date < today })).forEach(context.delete)
+        try context.save()
     }
 
     /// Schedules before it cancels, so a run that dies halfway leaves at worst a duplicate, never a gap.

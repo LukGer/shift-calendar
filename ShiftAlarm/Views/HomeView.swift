@@ -1,14 +1,16 @@
+import SwiftData
 import SwiftUI
 
 /// Arms on launch and on every return to the foreground, and shows what the latest run armed.
 struct HomeView: View {
     @Environment(Arming.self) private var arming
+    @Environment(\.modelContext) private var context
     @Environment(\.scenePhase) private var scenePhase
     @State private var isShowingSettings = false
 
     var body: some View {
         NavigationStack {
-            NextShiftView(result: arming.latestResult)
+            NextShiftView(result: arming.latestResult, toggleSkip: toggleSkip)
                 .navigationTitle("Next Shift")
                 .toolbar {
                     Button("Settings", systemImage: "gearshape") { isShowingSettings = true }
@@ -23,11 +25,17 @@ struct HomeView: View {
             }
         }
     }
+
+    private func toggleSkip(of shift: ArmedShift) {
+        try? context.toggleSkip(of: shift)
+        Task { await arming.run() }
+    }
 }
 
 /// The next Shift in a hero card, then a compact row for every later Shift in the Arming Window.
 struct NextShiftView: View {
     let result: ArmingResult?
+    let toggleSkip: (ArmedShift) -> Void
 
     var body: some View {
         ScrollView {
@@ -35,8 +43,8 @@ struct NextShiftView: View {
                 ArmingBanner(outcome: result?.outcome)
                 if case .armed(let shifts) = result {
                     if let next = shifts.first {
-                        NextShiftCard(shift: next)
-                        LaterThisWeek(shifts: shifts.dropFirst())
+                        NextShiftCard(shift: next, toggleSkip: toggleSkip)
+                        LaterThisWeek(shifts: shifts.dropFirst(), toggleSkip: toggleSkip)
                         Text("Days without a Shift ring nothing.")
                             .font(.footnote)
                             .foregroundStyle(.secondary)
@@ -62,6 +70,7 @@ struct NextShiftView: View {
 
 private struct NextShiftCard: View {
     let shift: ArmedShift
+    let toggleSkip: (ArmedShift) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -74,14 +83,21 @@ private struct NextShiftCard: View {
                 Text(first.text)
                     .font(.system(size: 64, weight: .semibold, design: .rounded))
                     .monospacedDigit()
+                    .strikethrough(shift.isSkipped)
             } else {
                 Text(shift.alarmTimes.summary)
                     .font(.title2)
             }
-            if shift.alarmTimes.count > 1 {
+            if shift.isSkipped {
+                Text("Skipped")
+            } else if shift.alarmTimes.count > 1 {
                 Text("then " + shift.alarmTimes.dropFirst().summary)
                     .monospacedDigit()
             }
+            SkipButton(shift: shift, toggleSkip: toggleSkip)
+                .buttonStyle(.bordered)
+                .tint(.white)
+                .padding(.top, 8)
         }
         .foregroundStyle(.white)
         .padding(20)
@@ -99,6 +115,7 @@ private struct NextShiftCard: View {
 
 private struct LaterThisWeek: View {
     let shifts: ArraySlice<ArmedShift>
+    let toggleSkip: (ArmedShift) -> Void
 
     var body: some View {
         if !shifts.isEmpty {
@@ -119,9 +136,15 @@ private struct LaterThisWeek: View {
                             .frame(width: 10)
                         Text(shift.name)
                         Spacer()
-                        Text(shift.alarmTimes.summary)
+                        Text(shift.isSkipped ? "Skipped" : shift.alarmTimes.summary)
                             .font(.subheadline.monospacedDigit())
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(shift.isSkipped ? .orange : .secondary)
+                        Menu {
+                            SkipButton(shift: shift, toggleSkip: toggleSkip)
+                        } label: {
+                            Label("Options", systemImage: "ellipsis.circle")
+                                .labelStyle(.iconOnly)
+                        }
                     }
                     .padding()
                 }
@@ -131,41 +154,64 @@ private struct LaterThisWeek: View {
     }
 }
 
+private struct SkipButton: View {
+    let shift: ArmedShift
+    let toggleSkip: (ArmedShift) -> Void
+
+    var body: some View {
+        Button(shift.isSkipped ? "Ring for this Shift" : "Skip this Shift", systemImage: "moon.zzz") {
+            toggleSkip(shift)
+        }
+    }
+}
+
 #Preview("Shifts") {
     NavigationStack {
         NextShiftView(result: .armed([
             .preview(inDays: 1, "Tagdienst", .orange, alarmTimes: ["05:00", "05:10", "05:20"]),
             .preview(inDays: 2, "Nachtdienst", .indigo, alarmTimes: ["16:30", "16:45"]),
-            .preview(inDays: 3, "Nachtdienst", .indigo, alarmTimes: ["16:30", "16:45"]),
+            .preview(inDays: 3, "Nachtdienst", .indigo, alarmTimes: ["16:30", "16:45"], isSkipped: true),
             .preview(inDays: 5, "Spätdienst", .teal, alarmTimes: []),
-        ]))
+        ]), toggleSkip: { _ in })
+        .navigationTitle("Next Shift")
+    }
+}
+
+#Preview("Next Shift skipped") {
+    NavigationStack {
+        NextShiftView(
+            result: .armed([.preview(inDays: 1, "Tagdienst", .orange, alarmTimes: ["05:00", "05:10"], isSkipped: true)]),
+            toggleSkip: { _ in }
+        )
         .navigationTitle("Next Shift")
     }
 }
 
 #Preview("Next Shift rings nothing") {
     NavigationStack {
-        NextShiftView(result: .armed([.preview(inDays: 0, "Spätdienst", .teal, alarmTimes: [])]))
+        NextShiftView(result: .armed([.preview(inDays: 0, "Spätdienst", .teal, alarmTimes: [])]), toggleSkip: { _ in })
             .navigationTitle("Next Shift")
     }
 }
 
 #Preview("No Shifts") {
     NavigationStack {
-        NextShiftView(result: .armed([]))
+        NextShiftView(result: .armed([]), toggleSkip: { _ in })
             .navigationTitle("Next Shift")
     }
 }
 
 #Preview("Banner") {
     NavigationStack {
-        NextShiftView(result: .failed)
+        NextShiftView(result: .failed, toggleSkip: { _ in })
             .navigationTitle("Next Shift")
     }
 }
 
 private extension ArmedShift {
-    static func preview(inDays days: Int, _ name: String, _ color: Color, alarmTimes: [String]) -> ArmedShift {
+    static func preview(
+        inDays days: Int, _ name: String, _ color: Color, alarmTimes: [String], isSkipped: Bool = false
+    ) -> ArmedShift {
         let calendar = Calendar.current
         return ArmedShift(
             date: calendar.date(byAdding: .day, value: days, to: calendar.startOfDay(for: .now))!,
@@ -175,7 +221,8 @@ private extension ArmedShift {
             alarmTimes: alarmTimes.map { text in
                 let parts = text.split(separator: ":").compactMap { Int($0) }
                 return AlarmTime(hour: parts[0], minute: parts[1])
-            }
+            },
+            isSkipped: isSkipped
         )
     }
 }
