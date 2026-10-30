@@ -11,6 +11,7 @@ protocol CalendarReader {
 }
 
 protocol AlarmScheduler {
+    var isAuthorized: Bool { get }
     /// Only this app's alarms, never the Clock app's.
     func alarmIDs() throws -> Set<UUID>
     func schedule(_ alarm: WantedAlarm) async throws

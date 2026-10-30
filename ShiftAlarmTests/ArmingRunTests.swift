@@ -269,12 +269,13 @@ struct ArmingRunTests {
     }
 
     enum Blindness: CaseIterable {
-        case noFullCalendarAccess, noCalendarsVisible
+        case noFullCalendarAccess, noCalendarsVisible, alarmsNotAllowed
     }
 
     @Test(arguments: [
         (Blindness.noFullCalendarAccess, SkipReason.calendarNotReadable),
         (Blindness.noCalendarsVisible, SkipReason.calendarNotReadable),
+        (Blindness.alarmsNotAllowed, SkipReason.alarmsNotAllowed),
     ])
     func aBlindRunLeavesArmedAlarmsUntouched(blindness: Blindness, reason: SkipReason) async {
         addHerShiftTypes()
@@ -336,6 +337,8 @@ struct ArmingRunTests {
             calendarReader.hasFullAccess = false
         case .noCalendarsVisible:
             calendarReader.deviceCalendars = []
+        case .alarmsNotAllowed:
+            alarms.isAuthorized = false
         }
     }
 

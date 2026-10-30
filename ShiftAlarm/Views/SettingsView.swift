@@ -53,6 +53,7 @@ struct SettingsView: View {
             }
             .task {
                 await calendarReader.requestAccess()
+                await AlarmKitScheduler().requestAuthorization()
                 deviceCalendars = calendarReader.calendars()
             }
         }

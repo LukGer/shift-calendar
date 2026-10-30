@@ -49,6 +49,7 @@ final class Arming {
             guard calendarReader.hasFullAccess, !calendarReader.calendars().isEmpty else {
                 return .skipped(.calendarNotReadable)
             }
+            guard alarmScheduler.isAuthorized else { return .skipped(.alarmsNotAllowed) }
             let now = clock.now
             let calendar = clock.calendar
             let windowEnd = calendar.date(byAdding: .day, value: 7, to: now)!

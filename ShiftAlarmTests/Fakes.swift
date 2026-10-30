@@ -29,6 +29,7 @@ final class FakeAlarmScheduler: AlarmScheduler {
 
     private(set) var armed: [UUID: WantedAlarm] = [:]
     private(set) var calls: [Call] = []
+    var isAuthorized = true
     var cancellingFails = false
 
     func arm(_ alarm: WantedAlarm) {

@@ -6,14 +6,20 @@ import SwiftUI
 struct AlarmKitScheduler: AlarmScheduler {
     private var manager: AlarmManager { .shared }
 
+    var isAuthorized: Bool {
+        manager.authorizationState == .authorized
+    }
+
+    /// Asks for permission to schedule alarms the first time; afterwards returns without asking.
+    func requestAuthorization() async {
+        _ = try? await manager.requestAuthorization()
+    }
+
     func alarmIDs() throws -> Set<UUID> {
         Set(try manager.alarms.map(\.id))
     }
 
     func schedule(_ alarm: WantedAlarm) async throws {
-        if manager.authorizationState == .notDetermined {
-            _ = try await manager.requestAuthorization()
-        }
         // The stopButton initializer is the one available on iOS 26.0; from 26.1 the system ignores the button.
         let alert = AlarmPresentation.Alert(
             title: LocalizedStringResource(stringLiteral: alarm.title),
