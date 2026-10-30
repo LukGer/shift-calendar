@@ -3,12 +3,12 @@ import SwiftUI
 /// Tells her why the latest Arming run changed nothing, or else that she won't be warned when Arming stops working.
 /// After a successful run it shows nothing unless she has denied notifications.
 struct ArmingBanner: View {
-    let outcome: ArmingOutcome?
+    let result: ArmingResult?
     var notificationPermission: NotificationPermission?
     @Environment(\.openURL) private var openURL
 
     var body: some View {
-        switch outcome {
+        switch result {
         case .skipped(.calendarNotReadable):
             banner(
                 "Shift Alarm can't read your calendar", systemImage: "calendar.badge.exclamationmark",
@@ -58,21 +58,21 @@ struct ArmingBanner: View {
 }
 
 #Preview("Calendar can't be read") {
-    ArmingBanner(outcome: .skipped(.calendarNotReadable)).padding()
+    ArmingBanner(result: .skipped(.calendarNotReadable)).padding()
 }
 
 #Preview("Chosen calendar missing") {
-    ArmingBanner(outcome: .skipped(.chosenCalendarMissing)).padding()
+    ArmingBanner(result: .skipped(.chosenCalendarMissing)).padding()
 }
 
 #Preview("Alarms not allowed") {
-    ArmingBanner(outcome: .skipped(.alarmsNotAllowed)).padding()
+    ArmingBanner(result: .skipped(.alarmsNotAllowed)).padding()
 }
 
 #Preview("Failed") {
-    ArmingBanner(outcome: .failed).padding()
+    ArmingBanner(result: .failed).padding()
 }
 
 #Preview("Notifications off") {
-    ArmingBanner(outcome: .armed, notificationPermission: .denied).padding()
+    ArmingBanner(result: .armed([]), notificationPermission: .denied).padding()
 }

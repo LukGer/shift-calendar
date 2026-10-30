@@ -278,7 +278,6 @@ struct ArmingRunTests {
     @Test func aSuccessfulRunRecordsItAsLastArmed() async {
         await arming.run()
 
-        #expect(record?.latestOutcome == .armed)
         #expect(record?.lastArmed == Self.instant("2031-03-02 20:00"))
     }
 
@@ -289,7 +288,6 @@ struct ArmingRunTests {
         let result = await arming.run()
 
         #expect(result == .failed)
-        #expect(record?.latestOutcome == .failed)
         #expect(record?.lastArmed == nil)
         #expect(notifier.staleArmingNotificationDate == nil)
     }
@@ -321,7 +319,6 @@ struct ArmingRunTests {
         #expect(result == .skipped(reason))
         #expect(alarms.calls == callsBefore)
         #expect(armedAlarms == armedBefore)
-        #expect(record?.latestOutcome == .skipped(reason))
         #expect(record?.lastArmed == Self.instant("2031-03-02 20:00"))
         #expect(notifier.staleArmingNotificationDate == Self.instant("2031-03-04 20:00"))
     }

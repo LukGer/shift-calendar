@@ -59,7 +59,7 @@ struct NextShiftView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                ArmingBanner(outcome: result?.outcome, notificationPermission: notificationPermission)
+                ArmingBanner(result: result, notificationPermission: notificationPermission)
                 if case .armed(let shifts) = result {
                     if let next = shifts.first {
                         NextShiftCard(shift: next, toggleSkip: toggleSkip)

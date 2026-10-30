@@ -53,7 +53,9 @@ final class Arming {
         } catch {
             result = .failed
         }
-        record(result, at: now, in: context)
+        if case .armed = result {
+            recordLastArmed(now, in: context)
+        }
         return result
     }
 
@@ -84,18 +86,15 @@ final class Arming {
         return .armed(plan.shiftsInWindow)
     }
 
-    private func record(_ result: ArmingResult, at now: Date, in context: ModelContext) {
+    private func recordLastArmed(_ now: Date, in context: ModelContext) {
         let record: ArmingRecord
         if let existing = try? context.fetch(FetchDescriptor<ArmingRecord>()).first {
             record = existing
         } else {
-            record = ArmingRecord(latestOutcome: result.outcome)
+            record = ArmingRecord()
             context.insert(record)
         }
-        record.latestOutcome = result.outcome
-        if case .armed = result {
-            record.lastArmed = now
-        }
+        record.lastArmed = now
         try? context.save()
     }
 
