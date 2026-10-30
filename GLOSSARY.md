@@ -9,7 +9,7 @@ A work shift on one date, recognised from an all-day event in one of her chosen 
 _Avoid_: Dienst, appointment, event (when meaning a recognised shift)
 
 **Shift Type**:
-A category of Shift (e.g. day shift, night shift), recognised by its Shortcut.
+A category of Shift (e.g. day shift, night shift), recognised by its Shortcut and shown in the colour she picks for it.
 _Avoid_: Shift kind, shortcut (the Shortcut is how a Shift Type is recognised, not the type itself)
 
 **Shortcut**:
@@ -31,3 +31,11 @@ _Avoid_: Look-ahead, horizon
 **Skip**:
 Her choice that one Shift rings nothing, tied to that Shift's date and Shift Type.
 _Avoid_: Cancel, mute, day off
+
+**Planning**:
+Her putting a Shift on a date, or taking it off, from the app, which writes or deletes its all-day event in her calendar.
+_Avoid_: Rostering, scheduling
+
+**Planning Calendar**:
+The chosen calendar that Planning writes new Shifts into; always one she can edit.
+_Avoid_: Write calendar, roster calendar, target calendar
