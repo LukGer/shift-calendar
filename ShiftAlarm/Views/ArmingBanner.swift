@@ -1,0 +1,78 @@
+import SwiftUI
+
+/// Tells her why the latest Arming run changed nothing, or else that she won't be warned when Arming stops working.
+/// After a successful run it shows nothing unless she has denied notifications.
+struct ArmingBanner: View {
+    let result: ArmingResult?
+    var notificationPermission: NotificationPermission?
+    @Environment(\.openURL) private var openURL
+
+    var body: some View {
+        switch result {
+        case .skipped(.calendarNotReadable):
+            banner(
+                "Shift Alarm can't read your calendar", systemImage: "calendar.badge.exclamationmark",
+                text: "Your alarms stay as they were. Allow full calendar access in Settings.",
+                opensSettings: true)
+        case .skipped(.chosenCalendarMissing):
+            banner(
+                "A chosen calendar can't be found", systemImage: "calendar.badge.exclamationmark",
+                text: "Your alarms stay as they were. Choose the calendars that hold your Shifts again.")
+        case .skipped(.alarmsNotAllowed):
+            banner(
+                "Shift Alarm isn't allowed to set alarms", systemImage: "alarm",
+                text: "Your alarms stay as they were. Allow alarms in Settings.",
+                opensSettings: true)
+        case .failed:
+            banner(
+                "Alarms couldn't be armed", systemImage: "exclamationmark.triangle",
+                text: "Alarms already armed still ring. Shift Alarm tries again the next time you open it.")
+        case .armed, nil:
+            if notificationPermission == .denied {
+                banner(
+                    "Notifications off", systemImage: "bell.slash",
+                    text: "If your alarms stop being armed, Shift Alarm can't warn you. Allow notifications in Settings.",
+                    opensSettings: true)
+            }
+        }
+    }
+
+    private func banner(_ title: String, systemImage: String, text: String, opensSettings: Bool = false) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label(title, systemImage: systemImage)
+                .font(.headline)
+            Text(text)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            if opensSettings {
+                Button("Open Settings") {
+                    openURL(URL(string: UIApplication.openSettingsURLString)!)
+                }
+                .buttonStyle(.borderedProminent)
+            }
+        }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.tint.opacity(0.1), in: .rect(cornerRadius: 20))
+    }
+}
+
+#Preview("Calendar can't be read") {
+    ArmingBanner(result: .skipped(.calendarNotReadable)).padding()
+}
+
+#Preview("Chosen calendar missing") {
+    ArmingBanner(result: .skipped(.chosenCalendarMissing)).padding()
+}
+
+#Preview("Alarms not allowed") {
+    ArmingBanner(result: .skipped(.alarmsNotAllowed)).padding()
+}
+
+#Preview("Failed") {
+    ArmingBanner(result: .failed).padding()
+}
+
+#Preview("Notifications off") {
+    ArmingBanner(result: .armed([]), notificationPermission: .denied).padding()
+}

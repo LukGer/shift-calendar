@@ -4,7 +4,20 @@ import SwiftUI
 struct ShiftAlarmApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            if let container = try? SharedStore.container() {
+                HomeView()
+                    .modelContainer(container)
+                    .environment(Arming.shared)
+            } else {
+                ContentUnavailableView(
+                    "Shift Alarm can't open its data",
+                    systemImage: "exclamationmark.triangle",
+                    description: Text("Quit and reopen the app.")
+                )
+            }
+        }
+        .backgroundTask(.appRefresh(BackgroundRefresh.identifier)) {
+            await Arming.shared.run()
         }
     }
 }
