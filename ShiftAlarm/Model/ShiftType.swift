@@ -52,7 +52,7 @@ nonisolated struct AlarmTime: Codable, Hashable, Comparable {
     }
 }
 
-extension [AlarmTime] {
+extension Collection<AlarmTime> {
     /// "05:00 · 05:10", or "Rings nothing" when empty.
     var summary: String {
         isEmpty ? "Rings nothing" : map(\.text).joined(separator: " · ")
