@@ -5,6 +5,7 @@ struct GridDay: Identifiable {
     let date: Date
     /// False for the leading and trailing days that fill the first and last weeks.
     let isInMonth: Bool
+    let isToday: Bool
     let shifts: [GridShift]
 
     var id: Date { date }
@@ -42,6 +43,7 @@ extension CalendarReader {
             days.append(GridDay(
                 date: date,
                 isInMonth: calendar.isDate(date, equalTo: day, toGranularity: .month),
+                isToday: date == armingWindow.lowerBound,
                 shifts: (shiftsByDate[date] ?? []).map { shift, events in
                     GridShift(
                         shiftType: shift.shiftType,

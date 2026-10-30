@@ -27,6 +27,18 @@ extension ArmingRunTests {
         #expect(days.filter(\.isInMonth).allSatisfy { Self.day($0.date).hasPrefix(month) })
     }
 
+    @Test(arguments: [
+        ("2031-03", 1, ["2031-03-02"]),
+        ("2031-02", 2, ["2031-03-02"]),
+        ("2031-02", 1, []),
+        ("2031-04", 2, []),
+    ])
+    func todayIsMarkedInAnyGridItAppearsIn(month: String, firstWeekday: Int, expected: [String]) throws {
+        let days = try monthOfShifts(month, firstWeekday: firstWeekday)
+
+        #expect(days.filter(\.isToday).map { Self.day($0.date) } == expected)
+    }
+
     /// March's grid runs from Sunday 2031-02-23 to Saturday 2031-04-05.
     nonisolated static let rostersInMarchsGrid: [([(String, String, String)], [String])] = [
         ([("td", "2031-03-03", "2031-03-03")], ["2031-03-03 td"]),
