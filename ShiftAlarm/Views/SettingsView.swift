@@ -6,7 +6,7 @@ struct SettingsView: View {
     @Query(sort: \ShiftType.createdAt) private var shiftTypes: [ShiftType]
     @Query private var chosenCalendars: [ChosenCalendar]
     @State private var deviceCalendars: [DeviceCalendar] = []
-    @State private var roster: [CalendarEvent] = []
+    @State private var unmatchedTitles: [String] = []
     private let calendarReader = EventKitReader()
 
     var body: some View {
@@ -34,9 +34,9 @@ struct SettingsView: View {
                     }
                 }
 
-                if !notAShiftType.isEmpty {
+                if !unmatchedTitles.isEmpty {
                     Section {
-                        ForEach(notAShiftType, id: \.self) { title in
+                        ForEach(unmatchedTitles, id: \.self) { title in
                             NavigationLink {
                                 ShiftTypeEditor(shiftType: nil, newShortcut: title)
                             } label: {
@@ -72,17 +72,14 @@ struct SettingsView: View {
                     Button("Done") { dismiss() }
                 }
             }
-            .task(id: chosenCalendars.map(\.identifier)) {
+            .task(id: chosenCalendars.map(\.identifier) + shiftTypes.map(\.shortcut)) {
                 await calendarReader.requestAccess()
                 await AlarmKitScheduler().requestAuthorization()
                 await UserNotificationsNotifier().requestAuthorization()
                 deviceCalendars = calendarReader.calendars()
-                roster = calendarReader.roster(in: chosenCalendars)
+                unmatchedTitles = calendarReader.unmatchedTitles(
+                    in: chosenCalendars, of: shiftTypes, now: .now, calendar: .current)
             }
         }
-    }
-
-    private var notAShiftType: [String] {
-        Shift.unmatchedTitles(in: roster, of: shiftTypes)
     }
 }
