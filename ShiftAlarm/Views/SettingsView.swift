@@ -44,6 +44,8 @@ struct SettingsView: View {
                 } footer: {
                     Text("Shifts are read from all-day events in these calendars.")
                 }
+
+                ArmingStatusSection()
             }
             .navigationTitle("Settings")
             .toolbar {

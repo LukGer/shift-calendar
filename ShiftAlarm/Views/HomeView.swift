@@ -1,14 +1,20 @@
+import SwiftData
 import SwiftUI
 
 /// Arms on launch and on every return to the foreground, and lists what the latest run armed.
 struct HomeView: View {
     @Environment(Arming.self) private var arming
     @Environment(\.scenePhase) private var scenePhase
+    @Query private var armingRecords: [ArmingRecord]
     @State private var isShowingSettings = false
 
     var body: some View {
         NavigationStack {
             ArmedShiftsList(result: arming.latestResult)
+                .safeAreaInset(edge: .top) {
+                    ArmingBanner(outcome: armingRecords.first?.latestOutcome)
+                        .padding(.horizontal)
+                }
                 .navigationTitle("Shifts")
                 .toolbar {
                     Button("Settings", systemImage: "gearshape") { isShowingSettings = true }
