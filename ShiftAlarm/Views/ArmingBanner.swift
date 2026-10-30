@@ -46,7 +46,7 @@ struct ArmingBanner: View {
         }
         .padding()
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.orange.opacity(0.15), in: .rect(cornerRadius: 20))
+        .background(.tint.opacity(0.1), in: .rect(cornerRadius: 20))
     }
 }
 

@@ -8,6 +8,7 @@ struct SettingsView: View {
     @Query(sort: \ShiftType.createdAt) private var shiftTypes: [ShiftType]
     @Query private var chosenCalendars: [ChosenCalendar]
     @State private var deviceCalendars: [DeviceCalendar] = []
+    @State private var roster: [CalendarEvent] = []
     private let calendarReader = EventKitReader()
 
     var body: some View {
@@ -35,6 +36,28 @@ struct SettingsView: View {
                     }
                 }
 
+                if !notAShiftType.isEmpty {
+                    Section {
+                        ForEach(notAShiftType, id: \.self) { title in
+                            NavigationLink {
+                                ShiftTypeEditor(shiftType: nil, newShortcut: title)
+                            } label: {
+                                LabeledContent {
+                                    Text("Add")
+                                        .foregroundStyle(.tint)
+                                } label: {
+                                    Text(title)
+                                        .monospaced()
+                                }
+                            }
+                        }
+                    } header: {
+                        Text("Not a Shift Type")
+                    } footer: {
+                        Text("These all-day event titles match no Shift Type, so they ring nothing.")
+                    }
+                }
+
                 Section {
                     ForEach(deviceCalendars) { calendar in
                         Toggle(calendar.title, isOn: isChosen(calendar))
@@ -53,12 +76,24 @@ struct SettingsView: View {
                     Button("Done") { dismiss() }
                 }
             }
-            .task {
+            .task(id: chosenCalendars.map(\.identifier)) {
                 await calendarReader.requestAccess()
                 await AlarmKitScheduler().requestAuthorization()
                 deviceCalendars = calendarReader.calendars()
+                roster = readRoster()
             }
         }
+    }
+
+    private var notAShiftType: [String] {
+        Shift.unmatchedTitles(in: roster, of: shiftTypes)
+    }
+
+    private func readRoster() -> [CalendarEvent] {
+        let today = Calendar.current.startOfDay(for: .now)
+        let threeMonthsAhead = Calendar.current.date(byAdding: .month, value: 3, to: today)!
+        return calendarReader.events(
+            inCalendars: chosenCalendars.map(\.identifier), from: today, to: threeMonthsAhead)
     }
 
     private func isChosen(_ calendar: DeviceCalendar) -> Binding<Bool> {
