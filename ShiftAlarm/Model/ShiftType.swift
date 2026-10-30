@@ -67,12 +67,20 @@ extension ShiftType {
     }
 }
 
+extension [ShiftType] {
+    var nextColorIndex: Int {
+        (map(\.colorIndex).max() ?? -1) + 1
+    }
+}
+
 extension ModelContext {
-    /// Adds a Shift Type with the palette's next colour, so colours follow creation order.
+    /// Adds a Shift Type in the colour she picked, or else the palette's next colour, so colours follow creation order.
     @discardableResult
-    func addShiftType(name: String, shortcut: String, alarmSet: [AlarmTime] = []) throws -> ShiftType {
-        let nextColorIndex = (try fetch(FetchDescriptor<ShiftType>()).map(\.colorIndex).max() ?? -1) + 1
-        let shiftType = ShiftType(name: name, shortcut: shortcut, alarmSet: alarmSet, colorIndex: nextColorIndex)
+    func addShiftType(
+        name: String, shortcut: String, alarmSet: [AlarmTime] = [], colorIndex: Int? = nil
+    ) throws -> ShiftType {
+        let colorIndex = try colorIndex ?? fetch(FetchDescriptor<ShiftType>()).nextColorIndex
+        let shiftType = ShiftType(name: name, shortcut: shortcut, alarmSet: alarmSet, colorIndex: colorIndex)
         insert(shiftType)
         return shiftType
     }
