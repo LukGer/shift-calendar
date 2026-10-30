@@ -8,8 +8,7 @@ final class ArmingRecord {
     var lastArmed: Date?
     var latestOutcome: ArmingOutcome
 
-    init(lastArmed: Date? = nil, latestOutcome: ArmingOutcome) {
-        self.lastArmed = lastArmed
+    init(latestOutcome: ArmingOutcome) {
         self.latestOutcome = latestOutcome
     }
 }
