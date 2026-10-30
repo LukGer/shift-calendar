@@ -10,6 +10,16 @@ protocol CalendarReader {
     func events(inCalendars identifiers: [String], from start: Date, to end: Date) -> [CalendarEvent]
 }
 
+extension CalendarReader {
+    /// Her roster from today to three months ahead, where Settings and the walkthrough look for titles
+    /// that are not a Shift Type yet.
+    func roster(in chosenCalendars: [ChosenCalendar]) -> [CalendarEvent] {
+        let today = Calendar.current.startOfDay(for: .now)
+        let threeMonthsAhead = Calendar.current.date(byAdding: .month, value: 3, to: today)!
+        return events(inCalendars: chosenCalendars.map(\.identifier), from: today, to: threeMonthsAhead)
+    }
+}
+
 protocol AlarmScheduler {
     var isAuthorized: Bool { get }
     /// Only this app's alarms, never the Clock app's.
