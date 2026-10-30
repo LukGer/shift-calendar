@@ -40,12 +40,7 @@ struct NextShiftView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                if result == .failed {
-                    ArmingBanner(
-                        title: "Alarms couldn't be armed",
-                        text: "Shift Alarm tries again the next time you open it."
-                    )
-                }
+                ArmingBanner(outcome: result?.outcome)
                 if case .armed(let shifts) = result {
                     if let next = shifts.first {
                         NextShiftCard(shift: next, toggleSkip: toggleSkip)
@@ -70,25 +65,6 @@ struct NextShiftView: View {
                 ProgressView()
             }
         }
-    }
-}
-
-/// Tells her why the latest run didn't arm.
-struct ArmingBanner: View {
-    let title: String
-    let text: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Label(title, systemImage: "exclamationmark.triangle")
-                .font(.headline)
-            Text(text)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
-        .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.tint.opacity(0.1), in: .rect(cornerRadius: 20))
     }
 }
 

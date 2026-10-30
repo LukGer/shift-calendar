@@ -2,6 +2,10 @@ import EventKit
 
 /// Reads her calendars through EventKit. Each call uses a fresh event store, so it sees access granted since the last call.
 struct EventKitReader: CalendarReader {
+    var hasFullAccess: Bool {
+        EKEventStore.authorizationStatus(for: .event) == .fullAccess
+    }
+
     /// Asks for full calendar access the first time; afterwards returns without asking.
     func requestAccess() async {
         _ = try? await EKEventStore().requestFullAccessToEvents()
@@ -22,12 +26,4 @@ struct EventKitReader: CalendarReader {
             CalendarEvent(title: $0.title ?? "", startDate: $0.startDate, endDate: $0.endDate, isAllDay: $0.isAllDay)
         }
     }
-}
-
-struct DeviceCalendar: Identifiable {
-    let identifier: String
-    let title: String
-    let sourceIdentifier: String
-
-    var id: String { identifier }
 }

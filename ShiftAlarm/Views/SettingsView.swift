@@ -67,6 +67,8 @@ struct SettingsView: View {
                 } footer: {
                     Text("Shifts are read from all-day events in these calendars.")
                 }
+
+                ArmingStatusSection()
             }
             .navigationTitle("Settings")
             .toolbar {
@@ -76,6 +78,7 @@ struct SettingsView: View {
             }
             .task(id: chosenCalendars.map(\.identifier)) {
                 await calendarReader.requestAccess()
+                await AlarmKitScheduler().requestAuthorization()
                 deviceCalendars = calendarReader.calendars()
                 roster = readRoster()
             }

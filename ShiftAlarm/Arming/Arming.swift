@@ -44,28 +44,58 @@ final class Arming {
     }
 
     private func arm() async -> ArmingResult {
+        guard let context = try? openStore().mainContext else { return .failed }
+        let now = clock.now
+        let result: ArmingResult
         do {
-            let context = try openStore().mainContext
-            let now = clock.now
-            let calendar = clock.calendar
-            let windowEnd = calendar.date(byAdding: .day, value: 7, to: now)!
-            try pruneSkips(before: calendar.startOfDay(for: now), in: context)
-            let events = calendarReader.events(
-                inCalendars: try context.fetch(FetchDescriptor<ChosenCalendar>()).map(\.identifier),
-                from: calendar.startOfDay(for: now),
-                to: windowEnd
-            )
-            let shifts = Shift.recognise(
-                in: events, of: try context.fetch(FetchDescriptor<ShiftType>()), calendar: calendar)
-            let plan = ArmingPlan(
-                shifts: shifts, skips: try context.fetch(FetchDescriptor<Skip>()),
-                now: now, windowEnd: windowEnd, calendar: calendar)
-            try await armExactly(plan.wantedAlarms)
-            await notifier.replaceStaleArmingNotification(firingAt: now.addingTimeInterval(48 * 60 * 60))
-            return .armed(plan.shiftsInWindow)
+            result = try await arm(in: context, now: now)
         } catch {
-            return .failed
+            result = .failed
         }
+        record(result, at: now, in: context)
+        return result
+    }
+
+    /// Changes no alarm unless it can see her calendars and is allowed to schedule alarms.
+    private func arm(in context: ModelContext, now: Date) async throws -> ArmingResult {
+        let calendar = clock.calendar
+        try pruneSkips(before: calendar.startOfDay(for: now), in: context)
+        let deviceCalendars = calendarReader.calendars()
+        guard calendarReader.hasFullAccess, !deviceCalendars.isEmpty else { return .skipped(.calendarNotReadable) }
+        let chosenCalendars = try context.fetch(FetchDescriptor<ChosenCalendar>())
+        guard chosenCalendars.allSatisfy({ $0.isFound(among: deviceCalendars) }) else {
+            return .skipped(.chosenCalendarMissing)
+        }
+        guard alarmScheduler.isAuthorized else { return .skipped(.alarmsNotAllowed) }
+        let windowEnd = calendar.date(byAdding: .day, value: 7, to: now)!
+        let events = calendarReader.events(
+            inCalendars: chosenCalendars.map(\.identifier),
+            from: calendar.startOfDay(for: now),
+            to: windowEnd
+        )
+        let shifts = Shift.recognise(
+            in: events, of: try context.fetch(FetchDescriptor<ShiftType>()), calendar: calendar)
+        let plan = ArmingPlan(
+            shifts: shifts, skips: try context.fetch(FetchDescriptor<Skip>()),
+            now: now, windowEnd: windowEnd, calendar: calendar)
+        try await armExactly(plan.wantedAlarms)
+        await notifier.replaceStaleArmingNotification(firingAt: now.addingTimeInterval(48 * 60 * 60))
+        return .armed(plan.shiftsInWindow)
+    }
+
+    private func record(_ result: ArmingResult, at now: Date, in context: ModelContext) {
+        let record: ArmingRecord
+        if let existing = try? context.fetch(FetchDescriptor<ArmingRecord>()).first {
+            record = existing
+        } else {
+            record = ArmingRecord(latestOutcome: result.outcome)
+            context.insert(record)
+        }
+        record.latestOutcome = result.outcome
+        if case .armed = result {
+            record.lastArmed = now
+        }
+        try? context.save()
     }
 
     private func pruneSkips(before today: Date, in context: ModelContext) throws {

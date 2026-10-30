@@ -22,7 +22,7 @@ struct ArmingRunTests {
 
     init() throws {
         let container = try ModelContainer(
-            for: ShiftType.self, ChosenCalendar.self, Skip.self,
+            for: ShiftType.self, ChosenCalendar.self, Skip.self, ArmingRecord.self,
             configurations: ModelConfiguration(isStoredInMemoryOnly: true)
         )
         self.container = container
@@ -258,14 +258,69 @@ struct ArmingRunTests {
         #expect(notifier.staleArmingNotificationDate == Self.instant("2031-03-04 20:00"))
     }
 
-    @Test func aRunThatFailsReportsItAndLeavesTheStaleArmingNotificationAlone() async {
+    @Test func aSuccessfulRunRecordsItAsLastArmed() async {
+        await arming.run()
+
+        #expect(record?.latestOutcome == .armed)
+        #expect(record?.lastArmed == Self.instant("2031-03-02 20:00"))
+    }
+
+    @Test func aRunThatFailsReportsItAndLeavesTheStaleArmingNotificationAndLastArmedAlone() async {
         alarms.arm(WantedAlarm(id: UUID(), instant: Self.instant("2031-03-04 05:00"), title: "Tagdienst", tint: .orange))
         alarms.cancellingFails = true
 
         let result = await arming.run()
 
         #expect(result == .failed)
+        #expect(record?.latestOutcome == .failed)
+        #expect(record?.lastArmed == nil)
         #expect(notifier.staleArmingNotificationDate == nil)
+    }
+
+    enum Blindness: CaseIterable {
+        case noFullCalendarAccess, noCalendarsVisible, chosenCalendarOnlyInAnotherAccount, chosenCalendarFoundTwice
+        case alarmsNotAllowed
+    }
+
+    @Test(arguments: [
+        (Blindness.noFullCalendarAccess, SkipReason.calendarNotReadable),
+        (Blindness.noCalendarsVisible, SkipReason.calendarNotReadable),
+        (Blindness.chosenCalendarOnlyInAnotherAccount, SkipReason.chosenCalendarMissing),
+        (Blindness.chosenCalendarFoundTwice, SkipReason.chosenCalendarMissing),
+        (Blindness.alarmsNotAllowed, SkipReason.alarmsNotAllowed),
+    ])
+    func aBlindRunLeavesArmedAlarmsAndLastArmedUntouched(blindness: Blindness, reason: SkipReason) async {
+        addHerShiftTypes()
+        roster(allDay("td", on: "2031-03-03"))
+        await arming.run()
+        let armedBefore = armedAlarms
+        let callsBefore = alarms.calls
+        calendarReader.eventsByCalendar["dienste"] = [allDay("nd", on: "2031-03-04")]
+        clock.now = Self.instant("2031-03-02 21:00")
+
+        make(blindness)
+        let result = await arming.run()
+
+        #expect(result == .skipped(reason))
+        #expect(alarms.calls == callsBefore)
+        #expect(armedAlarms == armedBefore)
+        #expect(record?.latestOutcome == .skipped(reason))
+        #expect(record?.lastArmed == Self.instant("2031-03-02 20:00"))
+        #expect(notifier.staleArmingNotificationDate == Self.instant("2031-03-04 20:00"))
+    }
+
+    @Test func findsAChosenCalendarAgainByTitleAndAccountWhenItsIdentifierChanges() async throws {
+        addHerShiftTypes()
+        calendarReader.deviceCalendars = [
+            DeviceCalendar(identifier: "dienste-2", title: "Dienste", sourceIdentifier: "icloud"),
+            DeviceCalendar(identifier: "dienste-google", title: "Dienste", sourceIdentifier: "google"),
+        ]
+        roster(allDay("td", on: "2031-03-03"), in: "dienste-2")
+
+        await arming.run()
+
+        #expect(armedAlarms == ["2031-03-03 05:00 Tagdienst"])
+        #expect(try container.mainContext.fetch(FetchDescriptor<ChosenCalendar>()).map(\.identifier) == ["dienste-2"])
     }
 
     @Test func overlappingRunsTakeTurns() async {
@@ -304,6 +359,31 @@ struct ArmingRunTests {
             calendarReader.eventsByCalendar["dienste"] = []
         case .calendarUnchosen:
             try context.fetch(FetchDescriptor<ChosenCalendar>()).forEach(context.delete)
+        }
+    }
+
+    /// Read through a context of its own, as Settings and the home banner see it after the run.
+    var record: ArmingRecord? {
+        try? ModelContext(container).fetch(FetchDescriptor<ArmingRecord>()).first
+    }
+
+    func make(_ blindness: Blindness) {
+        switch blindness {
+        case .noFullCalendarAccess:
+            calendarReader.hasFullAccess = false
+        case .noCalendarsVisible:
+            calendarReader.deviceCalendars = []
+        case .chosenCalendarOnlyInAnotherAccount:
+            calendarReader.deviceCalendars = [
+                DeviceCalendar(identifier: "dienste-google", title: "Dienste", sourceIdentifier: "google"),
+            ]
+        case .chosenCalendarFoundTwice:
+            calendarReader.deviceCalendars = [
+                DeviceCalendar(identifier: "dienste-2", title: "Dienste", sourceIdentifier: "icloud"),
+                DeviceCalendar(identifier: "dienste-3", title: "Dienste", sourceIdentifier: "icloud"),
+            ]
+        case .alarmsNotAllowed:
+            alarms.isAuthorized = false
         }
     }
 
