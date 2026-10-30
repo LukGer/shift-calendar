@@ -10,19 +10,22 @@ final class Arming {
     @ObservationIgnored private let alarmScheduler: AlarmScheduler
     @ObservationIgnored private let notifier: Notifier
     @ObservationIgnored private let clock: WallClock
+    @ObservationIgnored private let afterEachRun: @MainActor () -> Void
 
     init(
         openStore: @escaping @MainActor () throws -> ModelContainer,
         calendarReader: CalendarReader,
         alarmScheduler: AlarmScheduler,
         notifier: Notifier,
-        clock: WallClock
+        clock: WallClock,
+        afterEachRun: @escaping @MainActor () -> Void = {}
     ) {
         self.openStore = openStore
         self.calendarReader = calendarReader
         self.alarmScheduler = alarmScheduler
         self.notifier = notifier
         self.clock = clock
+        self.afterEachRun = afterEachRun
     }
 
     /// The latest run's result, for the home screen.
@@ -37,7 +40,7 @@ final class Arming {
             _ = await previousRun?.value
             let result = await arm()
             latestResult = result
-            BackgroundRefresh.schedule()
+            afterEachRun()
             return result
         }
         latestRun = thisRun
