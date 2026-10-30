@@ -55,46 +55,38 @@ struct ShiftTypeEditor: View {
                 }
             }
         }
-        .navigationTitle(trimmedName.isEmpty ? "New Shift Type" : trimmedName)
+        .navigationTitle(name.trimmed.isEmpty ? "New Shift Type" : name.trimmed)
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save", action: save)
-                    .disabled(trimmedName.isEmpty || trimmedShortcut.isEmpty || isShortcutTaken)
+                    .disabled(name.trimmed.isEmpty || shortcut.trimmed.isEmpty || isShortcutTaken)
             }
         }
     }
 
     @ViewBuilder private var shortcutFooter: some View {
         if isShortcutTaken {
-            Text("Another Shift Type already uses “\(trimmedShortcut)”.")
+            Text("Another Shift Type already uses “\(shortcut.trimmed)”.")
                 .foregroundStyle(.red)
-        } else if !trimmedShortcut.isEmpty {
-            Text("All-day events titled “\(trimmedShortcut)”, in any case, in your chosen calendars become \(trimmedName.isEmpty ? "these" : trimmedName) Shifts.")
+        } else if !shortcut.trimmed.isEmpty {
+            Text("All-day events titled “\(shortcut.trimmed)”, in any case, in your chosen calendars become \(name.trimmed.isEmpty ? "these" : name.trimmed) Shifts.")
         }
-    }
-
-    private var trimmedName: String {
-        name.trimmingCharacters(in: .whitespacesAndNewlines)
-    }
-
-    private var trimmedShortcut: String {
-        shortcut.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private var isShortcutTaken: Bool {
         shiftTypes.contains {
-            $0.id != shiftType?.id && ShiftType.comparable($0.shortcut) == ShiftType.comparable(shortcut)
+            $0.id != shiftType?.id && $0.shortcut.trimmedAndLowercased == shortcut.trimmedAndLowercased
         }
     }
 
     private func save() {
         let alarmSet = alarms.map { AlarmTime(of: $0.time, calendar: .current) }
         if let shiftType {
-            shiftType.name = trimmedName
+            shiftType.name = name.trimmed
             shiftType.shortcut = shortcut
             shiftType.replaceAlarmSet(with: alarmSet)
         } else {
-            try? context.addShiftType(name: trimmedName, shortcut: shortcut, alarmSet: alarmSet)
+            try? context.addShiftType(name: name.trimmed, shortcut: shortcut, alarmSet: alarmSet)
         }
         saveAndArm()
     }

@@ -78,7 +78,7 @@ extension ModelContext {
     /// A Shortcut left unnamed stays ignored.
     func addShiftTypes(for shortcuts: [String], named names: [String: String]) throws {
         for shortcut in shortcuts {
-            let name = (names[shortcut] ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            let name = (names[shortcut] ?? "").trimmed
             if !name.isEmpty {
                 try addShiftType(name: name, shortcut: shortcut)
             }

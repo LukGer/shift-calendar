@@ -62,18 +62,15 @@ final class Arming {
         return result
     }
 
-    /// Changes no alarm unless it can see her calendars and is allowed to schedule alarms.
+    private static let armingWindow = DateComponents(day: 7)
+    private static let staleArmingDelay: TimeInterval = 48 * 60 * 60
+
     private func arm(in context: ModelContext, now: Date) async throws -> ArmingResult {
         let calendar = clock.calendar
         try pruneSkips(before: calendar.startOfDay(for: now), in: context)
-        let deviceCalendars = calendarReader.calendars()
-        guard calendarReader.hasFullAccess, !deviceCalendars.isEmpty else { return .skipped(.calendarNotReadable) }
         let chosenCalendars = try context.fetch(FetchDescriptor<ChosenCalendar>())
-        guard chosenCalendars.allSatisfy({ $0.isFound(among: deviceCalendars) }) else {
-            return .skipped(.chosenCalendarMissing)
-        }
-        guard alarmScheduler.isAuthorized else { return .skipped(.alarmsNotAllowed) }
-        let windowEnd = calendar.date(byAdding: .day, value: 7, to: now)!
+        if let reason = reasonToChangeNoAlarm(chosenCalendars: chosenCalendars) { return .skipped(reason) }
+        let windowEnd = calendar.date(byAdding: Self.armingWindow, to: now)!
         let events = calendarReader.events(
             inCalendars: chosenCalendars.map(\.identifier),
             from: calendar.startOfDay(for: now),
@@ -85,8 +82,16 @@ final class Arming {
             shifts: shifts, skips: try dropSkipsWhoseShiftTypeChanged(on: shifts, in: context),
             now: now, windowEnd: windowEnd, calendar: calendar)
         try await armExactly(plan.wantedAlarms)
-        await notifier.replaceStaleArmingNotification(firingAt: now.addingTimeInterval(48 * 60 * 60))
+        await notifier.replaceStaleArmingNotification(firingAt: now.addingTimeInterval(Self.staleArmingDelay))
         return .armed(plan.shiftsInWindow)
+    }
+
+    private func reasonToChangeNoAlarm(chosenCalendars: [ChosenCalendar]) -> SkipReason? {
+        let deviceCalendars = calendarReader.calendars()
+        guard calendarReader.hasFullAccess, !deviceCalendars.isEmpty else { return .calendarNotReadable }
+        guard chosenCalendars.allSatisfy({ $0.isFound(among: deviceCalendars) }) else { return .chosenCalendarMissing }
+        guard alarmScheduler.isAuthorized else { return .alarmsNotAllowed }
+        return nil
     }
 
     private func recordLastArmed(_ now: Date, in context: ModelContext) {

@@ -39,7 +39,6 @@ struct HomeView: View {
         }
     }
 
-    /// Shown on every launch until she finishes it.
     private var isShowingWalkthrough: Binding<Bool> {
         Binding { !hasFinishedWalkthrough } set: { hasFinishedWalkthrough = !$0 }
     }
@@ -56,6 +55,8 @@ struct NextShiftView: View {
     var notificationPermission: NotificationPermission?
     let toggleSkip: (ArmedShift) -> Void
 
+    private let daysWithoutAShift: LocalizedStringKey = "Days without a Shift ring nothing."
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
@@ -64,14 +65,14 @@ struct NextShiftView: View {
                     if let next = shifts.first {
                         NextShiftCard(shift: next, toggleSkip: toggleSkip)
                         LaterThisWeek(shifts: shifts.dropFirst(), toggleSkip: toggleSkip)
-                        Text("Days without a Shift ring nothing.")
+                        Text(daysWithoutAShift)
                             .font(.footnote)
                             .foregroundStyle(.secondary)
                     } else {
                         ContentUnavailableView(
                             "No Shifts this week",
                             systemImage: "calendar",
-                            description: Text("Days without a Shift ring nothing.")
+                            description: Text(daysWithoutAShift)
                         )
                     }
                 }
@@ -107,10 +108,8 @@ private struct NextShiftCard: View {
                 Text(shift.alarmTimes.summary)
                     .font(.title2)
             }
-            if shift.isSkipped {
-                Text("Skipped")
-            } else if shift.alarmTimes.count > 1 {
-                Text("then " + shift.alarmTimes.dropFirst().summary)
+            if shift.isSkipped || shift.alarmTimes.count > 1 {
+                Text(shift.skippedOr("then " + shift.alarmTimes.dropFirst().summary))
                     .monospacedDigit()
             }
             SkipButton(shift: shift, toggleSkip: toggleSkip)
@@ -155,7 +154,7 @@ private struct LaterThisWeek: View {
                             .frame(width: 10)
                         Text(shift.name)
                         Spacer()
-                        Text(shift.isSkipped ? "Skipped" : shift.alarmTimes.summary)
+                        Text(shift.skippedOr(shift.alarmTimes.summary))
                             .font(.subheadline.monospacedDigit())
                             .foregroundStyle(shift.isSkipped ? .orange : .secondary)
                         Menu {
@@ -170,6 +169,12 @@ private struct LaterThisWeek: View {
             }
             .background(.background, in: .rect(cornerRadius: 16))
         }
+    }
+}
+
+private extension ArmedShift {
+    func skippedOr(_ rings: String) -> String {
+        isSkipped ? "Skipped" : rings
     }
 }
 
