@@ -79,6 +79,66 @@ struct ArmingRunTests {
         #expect(armedAlarms == [])
     }
 
+    @Test(arguments: [
+        (
+            [("nd", "2031-03-03", "2031-03-05")],
+            ["2031-03-03 18:30 Nachtdienst", "2031-03-04 18:30 Nachtdienst", "2031-03-05 18:30 Nachtdienst"]
+        ),
+        (
+            [("td", "2031-03-03", "2031-03-03"), ("hrn", "2031-03-03", "2031-03-03")],
+            ["2031-03-03 05:00 Tagdienst", "2031-03-03 06:15 Hausrunde"]
+        ),
+        (
+            [("td", "2031-03-03", "2031-03-03"), ("TD", "2031-03-03", "2031-03-03")],
+            ["2031-03-03 05:00 Tagdienst"]
+        ),
+        (
+            [("td", "2031-03-03", "2031-03-03"), ("td", "2031-03-02", "2031-03-04")],
+            ["2031-03-03 05:00 Tagdienst", "2031-03-04 05:00 Tagdienst"]
+        ),
+    ])
+    func armsEveryShiftOnEveryDateItsEventsCover(events: [(String, String, String)], expected: [String]) async {
+        addHerShiftTypes()
+        for (title, first, last) in events {
+            roster(allDay(title, from: first, through: last))
+        }
+
+        await arming.run()
+
+        #expect(armedAlarms == expected)
+    }
+
+    @Test func mergesIdenticalInstantsIntoOneAlarmForTheShiftTypeCreatedFirst() async {
+        addShiftType("Hausrunde", shortcut: "hrn", alarmSet: ["05:00", "06:15"], createdAt: "2031-01-03 00:00")
+        let tagdienst = addShiftType(
+            "Tagdienst", shortcut: "td", alarmSet: ["05:00", "05:10"], createdAt: "2031-01-01 00:00")
+        roster(allDay("hrn", on: "2031-03-03"), allDay("td", on: "2031-03-03"))
+
+        await arming.run()
+
+        #expect(armedAlarms == [
+            "2031-03-03 05:00 Tagdienst", "2031-03-03 05:10 Tagdienst", "2031-03-03 06:15 Hausrunde",
+        ])
+        #expect(alarms.armed.values.first { $0.title == "Tagdienst" }?.tint == tagdienst.color)
+    }
+
+    @Test(arguments: [
+        ("2031-03-02", "19:59", false),
+        ("2031-03-02", "20:00", false),
+        ("2031-03-02", "20:01", true),
+        ("2031-03-09", "20:00", true),
+        ("2031-03-09", "20:01", false),
+        ("2031-03-10", "05:00", false),
+    ])
+    func armsOnlyInstantsInsideTheArmingWindow(date: String, time: String, isArmed: Bool) async {
+        addShiftType("Nachtdienst", shortcut: "nd", alarmSet: [time])
+        roster(allDay("nd", on: date))
+
+        await arming.run()
+
+        #expect(armedAlarms == (isArmed ? ["\(date) \(time) Nachtdienst"] : []))
+    }
+
     // MARK: - Fixtures
 
     /// Her real Shortcuts. Spät (e6) is a late Shift and needs no wake-up.

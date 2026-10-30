@@ -37,3 +37,11 @@ nonisolated struct AlarmTime: Codable, Hashable, Comparable {
         String(format: "%02d:%02d", hour, minute)
     }
 }
+
+extension ShiftType {
+    static let palette: [Color] = [.orange, .indigo, .teal, .pink, .green, .purple, .brown, .cyan]
+
+    var color: Color {
+        Self.palette[colorIndex % Self.palette.count]
+    }
+}

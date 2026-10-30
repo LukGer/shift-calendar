@@ -30,19 +30,26 @@ final class Arming {
             let context = try openStore().mainContext
             let shiftTypes = try context.fetch(FetchDescriptor<ShiftType>())
             let chosenCalendars = try context.fetch(FetchDescriptor<ChosenCalendar>())
+            let now = clock.now
             let calendar = clock.calendar
+            let windowEnd = calendar.date(byAdding: .day, value: 7, to: now)!
             let events = calendarReader.events(
                 inCalendars: chosenCalendars.map(\.identifier),
-                from: calendar.startOfDay(for: clock.now),
-                to: calendar.date(byAdding: .day, value: 7, to: clock.now)!
+                from: calendar.startOfDay(for: now),
+                to: windowEnd
             )
+            var wantedAlarms: [Date: WantedAlarm] = [:]
             for shift in Shift.recognise(in: events, of: shiftTypes, calendar: calendar) {
                 for time in shift.shiftType.alarmSet {
                     let instant = calendar.date(
                         bySettingHour: time.hour, minute: time.minute, second: 0, of: shift.date)!
-                    try await alarmScheduler.schedule(
-                        WantedAlarm(id: UUID(), instant: instant, title: shift.shiftType.name, tint: .orange))
+                    guard now < instant, instant <= windowEnd, wantedAlarms[instant] == nil else { continue }
+                    wantedAlarms[instant] = WantedAlarm(
+                        id: UUID(), instant: instant, title: shift.shiftType.name, tint: shift.shiftType.color)
                 }
+            }
+            for alarm in wantedAlarms.values {
+                try await alarmScheduler.schedule(alarm)
             }
         } catch {}
     }
