@@ -139,7 +139,107 @@ struct ArmingRunTests {
         #expect(armedAlarms == (isArmed ? ["\(date) \(time) Nachtdienst"] : []))
     }
 
+    /// Expected IDs are RFC 4122 version-5 UUIDs computed independently (Python's `uuid.uuid5`)
+    /// in the app's namespace, from "<Shift date>|<Shift Type identity>|<alarm time>".
+    @Test(arguments: [
+        ("td", "2031-03-03", "05:00", "82C5E6E3-AD1E-5C50-8D42-5E2689A6D2D7"),
+        ("nd", "2031-03-04", "18:30", "11A9EA51-573A-556E-9C4F-3C659FEC817E"),
+    ])
+    func namesEachAlarmAfterItsShiftDateShiftTypeAndTime(
+        shortcut: String, date: String, time: String, expectedID: String
+    ) async {
+        let shiftType = addShiftType("Dienst", shortcut: shortcut, alarmSet: [time])
+        shiftType.id = UUID(uuidString: "6F1C5B0E-2D3A-4C8B-9E7F-1A2B3C4D5E6F")!
+        roster(allDay(shortcut, on: date))
+
+        await arming.run()
+
+        #expect(Set(alarms.armed.keys) == [UUID(uuidString: expectedID)!])
+    }
+
+    @Test func aRunWithNothingChangedSchedulesAndCancelsNothing() async {
+        addHerShiftTypes()
+        roster(allDay("td", on: "2031-03-03"), allDay("nd", from: "2031-03-05", through: "2031-03-06"))
+        await arming.run()
+        let callsAfterFirstRun = alarms.calls
+
+        await arming.run()
+
+        #expect(alarms.calls == callsAfterFirstRun)
+    }
+
+    enum Change: CaseIterable {
+        case shiftMovedToAnotherDate, shiftTypeChanged, alarmTimeChanged, shiftDeleted, calendarUnchosen
+    }
+
+    @Test(arguments: [
+        (Change.shiftMovedToAnotherDate, ["2031-03-04 05:00 Tagdienst"]),
+        (Change.shiftTypeChanged, ["2031-03-03 06:15 Hausrunde"]),
+        (Change.alarmTimeChanged, ["2031-03-03 04:45 Tagdienst"]),
+        (Change.shiftDeleted, []),
+        (Change.calendarUnchosen, []),
+    ])
+    func replacesAlarmsBySchedulingTheNewOnesBeforeCancellingTheOldOnes(change: Change, expected: [String]) async throws {
+        addHerShiftTypes()
+        roster(allDay("td", on: "2031-03-03"))
+        await arming.run()
+        let oldIDs = Set(alarms.armed.keys)
+        let callsBefore = alarms.calls.count
+
+        try apply(change)
+        await arming.run()
+
+        #expect(armedAlarms == expected)
+        let newIDs = Set(alarms.armed.keys)
+        #expect(Array(alarms.calls.dropFirst(callsBefore)) == newIDs.map { .schedule($0) } + oldIDs.map { .cancel($0) })
+    }
+
+    @Test func cancelsLeftoverAlarmsFromAnEarlierInstall() async {
+        let leftover = WantedAlarm(
+            id: UUID(), instant: Self.instant("2031-03-04 05:00"), title: "Tagdienst", tint: .orange)
+        alarms.arm(leftover)
+        addHerShiftTypes()
+        roster(allDay("td", on: "2031-03-03"))
+
+        await arming.run()
+
+        #expect(armedAlarms == ["2031-03-03 05:00 Tagdienst"])
+        #expect(alarms.calls.last == .cancel(leftover.id))
+    }
+
+    @Test func aRunThatDiesBeforeCancellingLeavesADuplicateNotAGapAndTheNextRunTidiesUp() async throws {
+        addHerShiftTypes()
+        roster(allDay("td", on: "2031-03-03"))
+        await arming.run()
+        try apply(.alarmTimeChanged)
+
+        alarms.cancellingFails = true
+        await arming.run()
+        #expect(armedAlarms == ["2031-03-03 04:45 Tagdienst", "2031-03-03 05:00 Tagdienst"])
+
+        alarms.cancellingFails = false
+        await arming.run()
+        #expect(armedAlarms == ["2031-03-03 04:45 Tagdienst"])
+    }
+
     // MARK: - Fixtures
+
+    func apply(_ change: Change) throws {
+        let context = container.mainContext
+        switch change {
+        case .shiftMovedToAnotherDate:
+            calendarReader.eventsByCalendar["dienste"] = [allDay("td", on: "2031-03-04")]
+        case .shiftTypeChanged:
+            calendarReader.eventsByCalendar["dienste"] = [allDay("hrn", on: "2031-03-03")]
+        case .alarmTimeChanged:
+            let tagdienst = try context.fetch(FetchDescriptor<ShiftType>()).first { $0.shortcut == "td" }
+            tagdienst?.replaceAlarmSet(with: [AlarmTime(hour: 4, minute: 45)])
+        case .shiftDeleted:
+            calendarReader.eventsByCalendar["dienste"] = []
+        case .calendarUnchosen:
+            try context.fetch(FetchDescriptor<ChosenCalendar>()).forEach(context.delete)
+        }
+    }
 
     /// Her real Shortcuts. Spät (e6) is a late Shift and needs no wake-up.
     func addHerShiftTypes() {
