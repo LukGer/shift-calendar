@@ -26,4 +26,11 @@ ASC_KEY_ID=XXXXXXXXXX
 ASC_ISSUER_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 ```
 
-and the key itself at `~/.appstoreconnect/private_keys/AuthKey_<ASC_KEY_ID>.p8`. Set `ASC_KEY_PATH` to keep the key somewhere else. The key needs the App Manager role.
+and the key itself at `~/.appstoreconnect/private_keys/AuthKey_<ASC_KEY_ID>.p8`. Set `ASC_KEY_PATH` to keep the key somewhere else.
+
+The upload is signed manually, because the API key has no access to cloud-managed distribution certificates. The dev Mac needs:
+
+- the "Apple Distribution: Lukas Gerhold" certificate with its private key in the login keychain
+- the App Store provisioning profile "Shift Alarm App Store" for `dev.lukger.shiftalarm` in `~/Library/Developer/Xcode/UserData/Provisioning Profiles/`
+
+Both expire on 2027-10-30. To renew them, create a new distribution certificate and a new App Store profile with the same name under Certificates, Identifiers & Profiles. Then install both on the Mac.
