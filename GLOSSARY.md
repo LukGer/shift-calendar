@@ -23,3 +23,11 @@ _Avoid_: Alarm group, alarm profile
 **Arming**:
 The app scheduling the Alarm Set for an upcoming Shift, replacing the manual re-setting of alarms.
 _Avoid_: Syncing, activating
+
+**Arming Window**:
+The period ahead, starting now, for which every Shift's Alarm Set is armed; about 7 days.
+_Avoid_: Look-ahead, horizon
+
+**Skip**:
+Her choice that one Shift rings nothing, tied to that Shift's date and Shift Type.
+_Avoid_: Cancel, mute, day off
