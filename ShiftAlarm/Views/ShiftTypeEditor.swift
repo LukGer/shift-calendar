@@ -1,7 +1,7 @@
 import SwiftData
 import SwiftUI
 
-/// Adds a Shift Type when `shiftType` is nil, otherwise edits it.
+/// Adds a Shift Type, starting from `newShortcut`, when `shiftType` is nil; otherwise edits it.
 struct ShiftTypeEditor: View {
     let shiftType: ShiftType?
 
@@ -13,10 +13,10 @@ struct ShiftTypeEditor: View {
     @State private var shortcut: String
     @State private var alarms: [EditableAlarm]
 
-    init(shiftType: ShiftType?) {
+    init(shiftType: ShiftType?, newShortcut: String = "") {
         self.shiftType = shiftType
         _name = State(initialValue: shiftType?.name ?? "")
-        _shortcut = State(initialValue: shiftType?.shortcut ?? "")
+        _shortcut = State(initialValue: shiftType?.shortcut ?? newShortcut)
         _alarms = State(initialValue: (shiftType?.alarmSet ?? []).map { EditableAlarm($0) })
     }
 
