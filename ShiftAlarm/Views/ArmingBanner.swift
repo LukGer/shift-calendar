@@ -1,10 +1,10 @@
 import SwiftUI
 
 /// Tells her why the latest Arming run changed nothing, or else that she won't be warned when Arming stops working.
-/// After a successful run with notifications allowed it shows nothing.
+/// After a successful run it shows nothing unless she has denied notifications.
 struct ArmingBanner: View {
     let outcome: ArmingOutcome?
-    var notificationsAllowed = true
+    var notificationPermission: NotificationPermission?
     @Environment(\.openURL) private var openURL
 
     var body: some View {
@@ -28,7 +28,7 @@ struct ArmingBanner: View {
                 "Alarms couldn't be armed", systemImage: "exclamationmark.triangle",
                 text: "Alarms already armed still ring. Shift Alarm tries again the next time you open it.")
         case .armed, nil:
-            if !notificationsAllowed {
+            if notificationPermission == .denied {
                 banner(
                     "Notifications off", systemImage: "bell.slash",
                     text: "If your alarms stop being armed, Shift Alarm can't warn you. Allow notifications in Settings.",
@@ -74,5 +74,5 @@ struct ArmingBanner: View {
 }
 
 #Preview("Notifications off") {
-    ArmingBanner(outcome: .armed, notificationsAllowed: false).padding()
+    ArmingBanner(outcome: .armed, notificationPermission: .denied).padding()
 }

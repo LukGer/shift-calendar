@@ -8,7 +8,7 @@ struct HomeView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.scenePhase) private var scenePhase
     @State private var isShowingSettings = false
-    @State private var notificationsAllowed = true
+    @State private var notificationPermission: NotificationPermission?
     @AppStorage("hasFinishedWalkthrough") private var hasFinishedWalkthrough = false
     /// EventKit only posts calendar changes while an event store is alive.
     @State private var watchedEventStore = EKEventStore()
@@ -16,7 +16,7 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             NextShiftView(
-                result: arming.latestResult, notificationsAllowed: notificationsAllowed, toggleSkip: toggleSkip)
+                result: arming.latestResult, notificationPermission: notificationPermission, toggleSkip: toggleSkip)
                 .navigationTitle("Next Shift")
                 .toolbar {
                     Button("Settings", systemImage: "gearshape") { isShowingSettings = true }
@@ -31,7 +31,7 @@ struct HomeView: View {
         .onChange(of: scenePhase, initial: true) { _, phase in
             if phase == .active {
                 Task { await arming.run() }
-                Task { notificationsAllowed = await UserNotificationsNotifier().isAuthorized() }
+                Task { notificationPermission = await UserNotificationsNotifier().permission() }
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .EKEventStoreChanged, object: watchedEventStore)) { _ in
@@ -53,13 +53,13 @@ struct HomeView: View {
 /// The next Shift in a hero card, then a compact row for every later Shift in the Arming Window.
 struct NextShiftView: View {
     let result: ArmingResult?
-    var notificationsAllowed = true
+    var notificationPermission: NotificationPermission?
     let toggleSkip: (ArmedShift) -> Void
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                ArmingBanner(outcome: result?.outcome, notificationsAllowed: notificationsAllowed)
+                ArmingBanner(outcome: result?.outcome, notificationPermission: notificationPermission)
                 if case .armed(let shifts) = result {
                     if let next = shifts.first {
                         NextShiftCard(shift: next, toggleSkip: toggleSkip)
