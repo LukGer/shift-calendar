@@ -7,10 +7,12 @@ struct HomeView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.scenePhase) private var scenePhase
     @State private var isShowingSettings = false
+    @State private var notificationsAllowed = true
 
     var body: some View {
         NavigationStack {
-            NextShiftView(result: arming.latestResult, toggleSkip: toggleSkip)
+            NextShiftView(
+                result: arming.latestResult, notificationsAllowed: notificationsAllowed, toggleSkip: toggleSkip)
                 .navigationTitle("Next Shift")
                 .toolbar {
                     Button("Settings", systemImage: "gearshape") { isShowingSettings = true }
@@ -22,6 +24,7 @@ struct HomeView: View {
         .onChange(of: scenePhase, initial: true) { _, phase in
             if phase == .active {
                 Task { await arming.run() }
+                Task { notificationsAllowed = await UserNotificationsNotifier().isAuthorized() }
             }
         }
     }
@@ -35,12 +38,13 @@ struct HomeView: View {
 /// The next Shift in a hero card, then a compact row for every later Shift in the Arming Window.
 struct NextShiftView: View {
     let result: ArmingResult?
+    var notificationsAllowed = true
     let toggleSkip: (ArmedShift) -> Void
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                ArmingBanner(outcome: result?.outcome)
+                ArmingBanner(outcome: result?.outcome, notificationsAllowed: notificationsAllowed)
                 if case .armed(let shifts) = result {
                     if let next = shifts.first {
                         NextShiftCard(shift: next, toggleSkip: toggleSkip)
