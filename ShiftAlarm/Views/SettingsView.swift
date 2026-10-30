@@ -79,6 +79,7 @@ struct SettingsView: View {
             .task(id: chosenCalendars.map(\.identifier)) {
                 await calendarReader.requestAccess()
                 await AlarmKitScheduler().requestAuthorization()
+                await UserNotificationsNotifier().requestAuthorization()
                 deviceCalendars = calendarReader.calendars()
                 roster = readRoster()
             }

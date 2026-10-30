@@ -1,8 +1,10 @@
 import SwiftUI
 
-/// Tells her why the latest Arming run changed nothing. After a successful run it shows nothing.
+/// Tells her why the latest Arming run changed nothing, or else that she won't be warned when Arming stops working.
+/// After a successful run with notifications allowed it shows nothing.
 struct ArmingBanner: View {
     let outcome: ArmingOutcome?
+    var notificationsAllowed = true
     @Environment(\.openURL) private var openURL
 
     var body: some View {
@@ -26,7 +28,12 @@ struct ArmingBanner: View {
                 "Alarms couldn't be armed", systemImage: "exclamationmark.triangle",
                 text: "Alarms already armed still ring. Shift Alarm tries again the next time you open it.")
         case .armed, nil:
-            EmptyView()
+            if !notificationsAllowed {
+                banner(
+                    "Notifications off", systemImage: "bell.slash",
+                    text: "If your alarms stop being armed, Shift Alarm can't warn you. Allow notifications in Settings.",
+                    opensSettings: true)
+            }
         }
     }
 
@@ -64,4 +71,8 @@ struct ArmingBanner: View {
 
 #Preview("Failed") {
     ArmingBanner(outcome: .failed).padding()
+}
+
+#Preview("Notifications off") {
+    ArmingBanner(outcome: .armed, notificationsAllowed: false).padding()
 }

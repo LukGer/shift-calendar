@@ -252,10 +252,13 @@ struct ArmingRunTests {
         #expect(Self.shifts(in: result) == ["2031-03-03 Tagdienst 04:40 05:20"])
     }
 
-    @Test func aSuccessfulRunMovesTheStaleArmingNotificationTo48HoursFromNow() async {
+    @Test func eachSuccessfulRunMovesTheStaleArmingNotificationTo48HoursFromNow() async {
+        await arming.run()
+        clock.now = Self.instant("2031-03-03 07:30")
+
         await arming.run()
 
-        #expect(notifier.staleArmingNotificationDate == Self.instant("2031-03-04 20:00"))
+        #expect(notifier.staleArmingNotificationDate == Self.instant("2031-03-05 07:30"))
     }
 
     @Test func aSuccessfulRunRecordsItAsLastArmed() async {
