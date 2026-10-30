@@ -22,7 +22,7 @@ struct HomeView: View {
                     Button("Settings", systemImage: "gearshape") { isShowingSettings = true }
                 }
                 .sheet(isPresented: $isShowingSettings) {
-                    SettingsView()
+                    SettingsView(notificationPermission: notificationPermission)
                 }
                 .fullScreenCover(isPresented: isShowingWalkthrough) {
                     Walkthrough()

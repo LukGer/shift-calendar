@@ -443,15 +443,9 @@ struct ArmingRunTests {
     func addShiftType(
         _ name: String, shortcut: String, alarmSet: [String], createdAt: String = "2031-01-01 00:00"
     ) -> ShiftType {
-        let colorIndex = (try? container.mainContext.fetchCount(FetchDescriptor<ShiftType>())) ?? 0
-        let shiftType = ShiftType(
-            name: name,
-            shortcut: shortcut,
-            alarmSet: alarmSet.map(Self.alarmTime),
-            colorIndex: colorIndex,
-            createdAt: Self.instant(createdAt)
-        )
-        container.mainContext.insert(shiftType)
+        let shiftType = try! container.mainContext.addShiftType(
+            name: name, shortcut: shortcut, alarmSet: alarmSet.map(Self.alarmTime))
+        shiftType.createdAt = Self.instant(createdAt)
         return shiftType
     }
 

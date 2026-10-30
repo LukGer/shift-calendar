@@ -2,6 +2,7 @@ import SwiftData
 import SwiftUI
 
 struct SettingsView: View {
+    let notificationPermission: NotificationPermission?
     @Environment(\.dismiss) private var dismiss
     @Query(sort: \ShiftType.createdAt) private var shiftTypes: [ShiftType]
     @Query private var chosenCalendars: [ChosenCalendar]
@@ -64,7 +65,7 @@ struct SettingsView: View {
                     Text("Shifts are read from all-day events in these calendars.")
                 }
 
-                ArmingStatusSection()
+                ArmingStatusSection(notificationPermission: notificationPermission)
             }
             .navigationTitle("Settings")
             .toolbar {

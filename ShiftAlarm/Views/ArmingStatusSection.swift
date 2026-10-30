@@ -3,10 +3,10 @@ import SwiftUI
 
 /// Whether Arming may read her calendar, set alarms and warn her, and when it last armed.
 struct ArmingStatusSection: View {
+    let notificationPermission: NotificationPermission?
     @Query private var records: [ArmingRecord]
-    /// Changes when a permission prompt closes and when she comes back from the Settings app.
+    /// Changes when a permission prompt closes and when she comes back from the Settings app, so the rows read again.
     @Environment(\.scenePhase) private var scenePhase
-    @State private var notificationPermission: NotificationPermission?
 
     var body: some View {
         Section("Status") {
@@ -20,9 +20,6 @@ struct ArmingStatusSection: View {
                     Text("Never")
                 }
             }
-        }
-        .task(id: scenePhase) {
-            notificationPermission = await UserNotificationsNotifier().permission()
         }
     }
 

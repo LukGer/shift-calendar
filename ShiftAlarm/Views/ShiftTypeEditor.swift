@@ -86,7 +86,7 @@ struct ShiftTypeEditor: View {
             shiftType.shortcut = shortcut
             shiftType.replaceAlarmSet(with: alarmSet)
         } else {
-            try? context.addShiftType(name: name.trimmed, shortcut: shortcut, alarmSet: alarmSet)
+            _ = try? context.addShiftType(name: name.trimmed, shortcut: shortcut, alarmSet: alarmSet)
         }
         saveAndArm()
     }
