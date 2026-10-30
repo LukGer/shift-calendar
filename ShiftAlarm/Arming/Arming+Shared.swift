@@ -19,7 +19,7 @@ enum SharedStore {
     /// the store's file can't be opened.
     static func container() throws -> ModelContainer {
         if let opened { return opened }
-        let container = try ModelContainer(for: ShiftType.self, ChosenCalendar.self)
+        let container = try ModelContainer(for: ShiftType.self, ChosenCalendar.self, ArmingRecord.self)
         opened = container
         return container
     }
