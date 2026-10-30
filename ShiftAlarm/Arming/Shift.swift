@@ -23,9 +23,9 @@ struct Shift: Hashable {
     static func unmatchedTitles(in events: [CalendarEvent], of shiftTypes: [ShiftType]) -> [String] {
         var titlesByShortcut: [String: String] = [:]
         for (event, shiftType) in match(events, to: shiftTypes) where shiftType == nil {
-            let shortcut = ShiftType.comparable(event.title)
+            let shortcut = event.title.trimmedAndLowercased
             guard !shortcut.isEmpty, titlesByShortcut[shortcut] == nil else { continue }
-            titlesByShortcut[shortcut] = event.title.trimmingCharacters(in: .whitespacesAndNewlines)
+            titlesByShortcut[shortcut] = event.title.trimmed
         }
         return titlesByShortcut.values.sorted { $0.localizedStandardCompare($1) == .orderedAscending }
     }
@@ -35,10 +35,10 @@ struct Shift: Hashable {
         _ events: [CalendarEvent], to shiftTypes: [ShiftType]
     ) -> [(event: CalendarEvent, shiftType: ShiftType?)] {
         let shiftTypesByShortcut = Dictionary(
-            shiftTypes.map { (ShiftType.comparable($0.shortcut), $0) },
+            shiftTypes.map { ($0.shortcut.trimmedAndLowercased, $0) },
             uniquingKeysWith: { first, _ in first }
         )
-        return events.filter(\.isAllDay).map { ($0, shiftTypesByShortcut[ShiftType.comparable($0.title)]) }
+        return events.filter(\.isAllDay).map { ($0, shiftTypesByShortcut[$0.title.trimmedAndLowercased]) }
     }
 
     /// Works whether the event ends at 23:59:59 on its last day (EventKit) or at the next midnight (ICS).
@@ -53,9 +53,12 @@ struct Shift: Hashable {
     }
 }
 
-extension ShiftType {
-    /// How a Shortcut is compared: trimmed and ignoring case.
-    static func comparable(_ shortcut: String) -> String {
-        shortcut.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+extension String {
+    var trimmed: String {
+        trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    var trimmedAndLowercased: String {
+        trimmed.lowercased()
     }
 }

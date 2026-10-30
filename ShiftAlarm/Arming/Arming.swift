@@ -10,19 +10,22 @@ final class Arming {
     @ObservationIgnored private let alarmScheduler: AlarmScheduler
     @ObservationIgnored private let notifier: Notifier
     @ObservationIgnored private let clock: WallClock
+    @ObservationIgnored private let afterEachRun: @MainActor () -> Void
 
     init(
         openStore: @escaping @MainActor () throws -> ModelContainer,
         calendarReader: CalendarReader,
         alarmScheduler: AlarmScheduler,
         notifier: Notifier,
-        clock: WallClock
+        clock: WallClock,
+        afterEachRun: @escaping @MainActor () -> Void = {}
     ) {
         self.openStore = openStore
         self.calendarReader = calendarReader
         self.alarmScheduler = alarmScheduler
         self.notifier = notifier
         self.clock = clock
+        self.afterEachRun = afterEachRun
     }
 
     /// The latest run's result, for the home screen.
@@ -37,7 +40,7 @@ final class Arming {
             _ = await previousRun?.value
             let result = await arm()
             latestResult = result
-            BackgroundRefresh.schedule()
+            afterEachRun()
             return result
         }
         latestRun = thisRun
@@ -53,22 +56,21 @@ final class Arming {
         } catch {
             result = .failed
         }
-        record(result, at: now, in: context)
+        if case .armed = result {
+            recordLastArmed(now, in: context)
+        }
         return result
     }
 
-    /// Changes no alarm unless it can see her calendars and is allowed to schedule alarms.
+    private static let armingWindow = DateComponents(day: 7)
+    private static let staleArmingDelay: TimeInterval = 48 * 60 * 60
+
     private func arm(in context: ModelContext, now: Date) async throws -> ArmingResult {
         let calendar = clock.calendar
         try pruneSkips(before: calendar.startOfDay(for: now), in: context)
-        let deviceCalendars = calendarReader.calendars()
-        guard calendarReader.hasFullAccess, !deviceCalendars.isEmpty else { return .skipped(.calendarNotReadable) }
         let chosenCalendars = try context.fetch(FetchDescriptor<ChosenCalendar>())
-        guard chosenCalendars.allSatisfy({ $0.isFound(among: deviceCalendars) }) else {
-            return .skipped(.chosenCalendarMissing)
-        }
-        guard alarmScheduler.isAuthorized else { return .skipped(.alarmsNotAllowed) }
-        let windowEnd = calendar.date(byAdding: .day, value: 7, to: now)!
+        if let reason = reasonToChangeNoAlarm(chosenCalendars: chosenCalendars) { return .skipped(reason) }
+        let windowEnd = calendar.date(byAdding: Self.armingWindow, to: now)!
         let events = calendarReader.events(
             inCalendars: chosenCalendars.map(\.identifier),
             from: calendar.startOfDay(for: now),
@@ -77,31 +79,51 @@ final class Arming {
         let shifts = Shift.recognise(
             in: events, of: try context.fetch(FetchDescriptor<ShiftType>()), calendar: calendar)
         let plan = ArmingPlan(
-            shifts: shifts, skips: try context.fetch(FetchDescriptor<Skip>()),
+            shifts: shifts, skips: try dropSkipsWhoseShiftTypeChanged(on: shifts, in: context),
             now: now, windowEnd: windowEnd, calendar: calendar)
         try await armExactly(plan.wantedAlarms)
-        await notifier.replaceStaleArmingNotification(firingAt: now.addingTimeInterval(48 * 60 * 60))
+        await notifier.replaceStaleArmingNotification(firingAt: now.addingTimeInterval(Self.staleArmingDelay))
         return .armed(plan.shiftsInWindow)
     }
 
-    private func record(_ result: ArmingResult, at now: Date, in context: ModelContext) {
+    private func reasonToChangeNoAlarm(chosenCalendars: [ChosenCalendar]) -> SkipReason? {
+        let deviceCalendars = calendarReader.calendars()
+        guard calendarReader.hasFullAccess, !deviceCalendars.isEmpty else { return .calendarNotReadable }
+        guard chosenCalendars.allSatisfy({ $0.isFound(among: deviceCalendars) }) else { return .chosenCalendarMissing }
+        guard alarmScheduler.isAuthorized else { return .alarmsNotAllowed }
+        return nil
+    }
+
+    private func recordLastArmed(_ now: Date, in context: ModelContext) {
         let record: ArmingRecord
         if let existing = try? context.fetch(FetchDescriptor<ArmingRecord>()).first {
             record = existing
         } else {
-            record = ArmingRecord(latestOutcome: result.outcome)
+            record = ArmingRecord()
             context.insert(record)
         }
-        record.latestOutcome = result.outcome
-        if case .armed = result {
-            record.lastArmed = now
-        }
+        record.lastArmed = now
         try? context.save()
     }
 
     private func pruneSkips(before today: Date, in context: ModelContext) throws {
         try context.fetch(FetchDescriptor<Skip>(predicate: #Predicate { $0.date < today })).forEach(context.delete)
         try context.save()
+    }
+
+    /// Keeps a Skip whose date has no Shift, so it still applies if the event is added again. Returns the Skips kept.
+    private func dropSkipsWhoseShiftTypeChanged(on shifts: [Shift], in context: ModelContext) throws -> [Skip] {
+        var kept: [Skip] = []
+        for skip in try context.fetch(FetchDescriptor<Skip>()) {
+            let shiftTypeIDs = shifts.filter { $0.date == skip.date }.map(\.shiftType.id)
+            if shiftTypeIDs.isEmpty || shiftTypeIDs.contains(skip.shiftTypeID) {
+                kept.append(skip)
+            } else {
+                context.delete(skip)
+            }
+        }
+        try context.save()
+        return kept
     }
 
     /// Schedules before it cancels, so a run that dies halfway leaves at worst a duplicate, never a gap.

@@ -69,16 +69,19 @@ extension ShiftType {
 
 extension ModelContext {
     /// Adds a Shift Type with the palette's next colour, so colours follow creation order.
-    func addShiftType(name: String, shortcut: String, alarmSet: [AlarmTime] = []) throws {
+    @discardableResult
+    func addShiftType(name: String, shortcut: String, alarmSet: [AlarmTime] = []) throws -> ShiftType {
         let nextColorIndex = (try fetch(FetchDescriptor<ShiftType>()).map(\.colorIndex).max() ?? -1) + 1
-        insert(ShiftType(name: name, shortcut: shortcut, alarmSet: alarmSet, colorIndex: nextColorIndex))
+        let shiftType = ShiftType(name: name, shortcut: shortcut, alarmSet: alarmSet, colorIndex: nextColorIndex)
+        insert(shiftType)
+        return shiftType
     }
 
     /// Makes each Shortcut she named a Shift Type that rings nothing until she gives it an Alarm Set in Settings.
     /// A Shortcut left unnamed stays ignored.
     func addShiftTypes(for shortcuts: [String], named names: [String: String]) throws {
         for shortcut in shortcuts {
-            let name = (names[shortcut] ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            let name = (names[shortcut] ?? "").trimmed
             if !name.isEmpty {
                 try addShiftType(name: name, shortcut: shortcut)
             }

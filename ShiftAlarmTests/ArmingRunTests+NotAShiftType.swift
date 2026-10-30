@@ -19,7 +19,7 @@ extension ArmingRunTests {
             roster(allDay(title, on: "2031-03-03"))
         }
 
-        #expect(try notAShiftType() == expected)
+        #expect(try unmatchedTitles() == expected)
     }
 
     @Test(arguments: ["sd", "Besprechung", "td"])
@@ -27,7 +27,7 @@ extension ArmingRunTests {
         addHerShiftTypes()
         roster(timed(title, at: "2031-03-03 07:00"))
 
-        #expect(try notAShiftType() == [])
+        #expect(try unmatchedTitles() == [])
     }
 
     @Test(arguments: ["td", " Td ", "ND ", "e6", "nd Station 3", "t d", "sd", "U", "frei", "Allerheiligen"])
@@ -37,13 +37,16 @@ extension ArmingRunTests {
 
         let result = await arming.run()
 
-        #expect(Self.shifts(in: result).isEmpty != (try notAShiftType()).isEmpty)
+        #expect(Self.shifts(in: result).isEmpty != (try unmatchedTitles()).isEmpty)
     }
 
-    func notAShiftType() throws -> [String] {
-        Shift.unmatchedTitles(
-            in: calendarReader.eventsByCalendar["dienste"] ?? [],
-            of: try container.mainContext.fetch(FetchDescriptor<ShiftType>())
+    func unmatchedTitles() throws -> [String] {
+        let context = container.mainContext
+        return calendarReader.unmatchedTitles(
+            in: try context.fetch(FetchDescriptor<ChosenCalendar>()),
+            of: try context.fetch(FetchDescriptor<ShiftType>()),
+            now: clock.now,
+            calendar: clock.calendar
         )
     }
 }

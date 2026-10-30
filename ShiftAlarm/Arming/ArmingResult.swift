@@ -4,27 +4,20 @@ import SwiftUI
 /// What an Arming run reports. The home screen renders from it.
 enum ArmingResult: Equatable {
     /// The Shifts in the Arming Window, in date order.
-    case armed([ArmedShift])
+    case armed([WindowShift])
     /// Changed nothing, because the run couldn't see enough to change alarms safely.
     case skipped(SkipReason)
     case failed
-
-    var outcome: ArmingOutcome {
-        switch self {
-        case .armed: .armed
-        case .skipped(let reason): .skipped(reason)
-        case .failed: .failed
-        }
-    }
 }
 
-nonisolated enum SkipReason: String, Codable {
+nonisolated enum SkipReason {
     case calendarNotReadable
     case chosenCalendarMissing
     case alarmsNotAllowed
 }
 
-struct ArmedShift: Equatable, Identifiable {
+/// A Shift in the Arming Window as the home screen shows it, whether it rings, is skipped or rings nothing.
+struct WindowShift: Equatable, Identifiable {
     let date: Date
     let shiftTypeID: UUID
     let name: String

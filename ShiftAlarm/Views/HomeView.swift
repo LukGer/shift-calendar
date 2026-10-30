@@ -8,7 +8,7 @@ struct HomeView: View {
     @Environment(\.modelContext) private var context
     @Environment(\.scenePhase) private var scenePhase
     @State private var isShowingSettings = false
-    @State private var notificationsAllowed = true
+    @State private var notificationPermission: NotificationPermission?
     @AppStorage("hasFinishedWalkthrough") private var hasFinishedWalkthrough = false
     /// EventKit only posts calendar changes while an event store is alive.
     @State private var watchedEventStore = EKEventStore()
@@ -16,13 +16,13 @@ struct HomeView: View {
     var body: some View {
         NavigationStack {
             NextShiftView(
-                result: arming.latestResult, notificationsAllowed: notificationsAllowed, toggleSkip: toggleSkip)
+                result: arming.latestResult, notificationPermission: notificationPermission, toggleSkip: toggleSkip)
                 .navigationTitle("Next Shift")
                 .toolbar {
                     Button("Settings", systemImage: "gearshape") { isShowingSettings = true }
                 }
                 .sheet(isPresented: $isShowingSettings) {
-                    SettingsView()
+                    SettingsView(notificationPermission: notificationPermission)
                 }
                 .fullScreenCover(isPresented: isShowingWalkthrough) {
                     Walkthrough()
@@ -31,7 +31,7 @@ struct HomeView: View {
         .onChange(of: scenePhase, initial: true) { _, phase in
             if phase == .active {
                 Task { await arming.run() }
-                Task { notificationsAllowed = await UserNotificationsNotifier().isAuthorized() }
+                Task { notificationPermission = await UserNotificationsNotifier().permission() }
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .EKEventStoreChanged, object: watchedEventStore)) { _ in
@@ -39,12 +39,11 @@ struct HomeView: View {
         }
     }
 
-    /// Shown on every launch until she finishes it.
     private var isShowingWalkthrough: Binding<Bool> {
         Binding { !hasFinishedWalkthrough } set: { hasFinishedWalkthrough = !$0 }
     }
 
-    private func toggleSkip(of shift: ArmedShift) {
+    private func toggleSkip(of shift: WindowShift) {
         try? context.toggleSkip(of: shift)
         Task { await arming.run() }
     }
@@ -53,25 +52,27 @@ struct HomeView: View {
 /// The next Shift in a hero card, then a compact row for every later Shift in the Arming Window.
 struct NextShiftView: View {
     let result: ArmingResult?
-    var notificationsAllowed = true
-    let toggleSkip: (ArmedShift) -> Void
+    var notificationPermission: NotificationPermission?
+    let toggleSkip: (WindowShift) -> Void
+
+    private let daysWithoutAShift: LocalizedStringKey = "Days without a Shift ring nothing."
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                ArmingBanner(outcome: result?.outcome, notificationsAllowed: notificationsAllowed)
+                ArmingBanner(result: result, notificationPermission: notificationPermission)
                 if case .armed(let shifts) = result {
                     if let next = shifts.first {
                         NextShiftCard(shift: next, toggleSkip: toggleSkip)
                         LaterThisWeek(shifts: shifts.dropFirst(), toggleSkip: toggleSkip)
-                        Text("Days without a Shift ring nothing.")
+                        Text(daysWithoutAShift)
                             .font(.footnote)
                             .foregroundStyle(.secondary)
                     } else {
                         ContentUnavailableView(
                             "No Shifts this week",
                             systemImage: "calendar",
-                            description: Text("Days without a Shift ring nothing.")
+                            description: Text(daysWithoutAShift)
                         )
                     }
                 }
@@ -88,8 +89,8 @@ struct NextShiftView: View {
 }
 
 private struct NextShiftCard: View {
-    let shift: ArmedShift
-    let toggleSkip: (ArmedShift) -> Void
+    let shift: WindowShift
+    let toggleSkip: (WindowShift) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -107,10 +108,8 @@ private struct NextShiftCard: View {
                 Text(shift.alarmTimes.summary)
                     .font(.title2)
             }
-            if shift.isSkipped {
-                Text("Skipped")
-            } else if shift.alarmTimes.count > 1 {
-                Text("then " + shift.alarmTimes.dropFirst().summary)
+            if shift.isSkipped || shift.alarmTimes.count > 1 {
+                Text(shift.skippedOr("then " + shift.alarmTimes.dropFirst().summary))
                     .monospacedDigit()
             }
             SkipButton(shift: shift, toggleSkip: toggleSkip)
@@ -133,8 +132,8 @@ private struct NextShiftCard: View {
 }
 
 private struct LaterThisWeek: View {
-    let shifts: ArraySlice<ArmedShift>
-    let toggleSkip: (ArmedShift) -> Void
+    let shifts: ArraySlice<WindowShift>
+    let toggleSkip: (WindowShift) -> Void
 
     var body: some View {
         if !shifts.isEmpty {
@@ -155,7 +154,7 @@ private struct LaterThisWeek: View {
                             .frame(width: 10)
                         Text(shift.name)
                         Spacer()
-                        Text(shift.isSkipped ? "Skipped" : shift.alarmTimes.summary)
+                        Text(shift.skippedOr(shift.alarmTimes.summary))
                             .font(.subheadline.monospacedDigit())
                             .foregroundStyle(shift.isSkipped ? .orange : .secondary)
                         Menu {
@@ -173,9 +172,15 @@ private struct LaterThisWeek: View {
     }
 }
 
+private extension WindowShift {
+    func skippedOr(_ rings: String) -> String {
+        isSkipped ? "Skipped" : rings
+    }
+}
+
 private struct SkipButton: View {
-    let shift: ArmedShift
-    let toggleSkip: (ArmedShift) -> Void
+    let shift: WindowShift
+    let toggleSkip: (WindowShift) -> Void
 
     var body: some View {
         Button(shift.isSkipped ? "Ring for this Shift" : "Skip this Shift", systemImage: "moon.zzz") {
@@ -227,12 +232,12 @@ private struct SkipButton: View {
     }
 }
 
-private extension ArmedShift {
+private extension WindowShift {
     static func preview(
         inDays days: Int, _ name: String, _ color: Color, alarmTimes: [String], isSkipped: Bool = false
-    ) -> ArmedShift {
+    ) -> WindowShift {
         let calendar = Calendar.current
-        return ArmedShift(
+        return WindowShift(
             date: calendar.date(byAdding: .day, value: days, to: calendar.startOfDay(for: .now))!,
             shiftTypeID: UUID(),
             name: name,

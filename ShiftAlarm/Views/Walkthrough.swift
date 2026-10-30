@@ -91,7 +91,8 @@ struct Walkthrough: View {
         .indexViewStyle(.page(backgroundDisplayMode: .always))
         .task(id: page) {
             deviceCalendars = calendarReader.calendars()
-            foundShortcuts = Shift.unmatchedTitles(in: calendarReader.roster(in: chosenCalendars), of: shiftTypes)
+            foundShortcuts = calendarReader.unmatchedTitles(
+                in: chosenCalendars, of: shiftTypes, now: .now, calendar: .current)
         }
     }
 

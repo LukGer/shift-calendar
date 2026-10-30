@@ -242,6 +242,20 @@ struct ArmingRunTests {
         ])
     }
 
+    @Test(arguments: [
+        ([], ["2031-03-02 Hausrunde", "2031-03-03 Hausrunde"]),
+        (["06:15"], ["2031-03-03 Hausrunde 06:15"]),
+        (["21:00"], ["2031-03-02 Hausrunde 21:00", "2031-03-03 Hausrunde 21:00"]),
+    ])
+    func reportsNoShiftBeforeToday(alarmSet: [String], expected: [String]) async {
+        addShiftType("Hausrunde", shortcut: "hrn", alarmSet: alarmSet)
+        roster(allDay("hrn", from: "2031-03-01", through: "2031-03-03"))
+
+        let result = await arming.run()
+
+        #expect(Self.shifts(in: result) == expected)
+    }
+
     @Test func keepsAnAlarmSetInTimeOrder() async {
         let tagdienst = addShiftType("Tagdienst", shortcut: "td", alarmSet: ["05:10", "04:50"])
         tagdienst.replaceAlarmSet(with: [AlarmTime(hour: 5, minute: 20), AlarmTime(hour: 4, minute: 40)])
@@ -264,7 +278,6 @@ struct ArmingRunTests {
     @Test func aSuccessfulRunRecordsItAsLastArmed() async {
         await arming.run()
 
-        #expect(record?.latestOutcome == .armed)
         #expect(record?.lastArmed == Self.instant("2031-03-02 20:00"))
     }
 
@@ -275,7 +288,6 @@ struct ArmingRunTests {
         let result = await arming.run()
 
         #expect(result == .failed)
-        #expect(record?.latestOutcome == .failed)
         #expect(record?.lastArmed == nil)
         #expect(notifier.staleArmingNotificationDate == nil)
     }
@@ -307,7 +319,6 @@ struct ArmingRunTests {
         #expect(result == .skipped(reason))
         #expect(alarms.calls == callsBefore)
         #expect(armedAlarms == armedBefore)
-        #expect(record?.latestOutcome == .skipped(reason))
         #expect(record?.lastArmed == Self.instant("2031-03-02 20:00"))
         #expect(notifier.staleArmingNotificationDate == Self.instant("2031-03-04 20:00"))
     }
@@ -432,15 +443,9 @@ struct ArmingRunTests {
     func addShiftType(
         _ name: String, shortcut: String, alarmSet: [String], createdAt: String = "2031-01-01 00:00"
     ) -> ShiftType {
-        let colorIndex = (try? container.mainContext.fetchCount(FetchDescriptor<ShiftType>())) ?? 0
-        let shiftType = ShiftType(
-            name: name,
-            shortcut: shortcut,
-            alarmSet: alarmSet.map(Self.alarmTime),
-            colorIndex: colorIndex,
-            createdAt: Self.instant(createdAt)
-        )
-        container.mainContext.insert(shiftType)
+        let shiftType = try! container.mainContext.addShiftType(
+            name: name, shortcut: shortcut, alarmSet: alarmSet.map(Self.alarmTime))
+        shiftType.createdAt = Self.instant(createdAt)
         return shiftType
     }
 

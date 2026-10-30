@@ -77,6 +77,22 @@ extension ArmingRunTests {
         #expect(Self.shifts(in: result) == [expectedShift])
     }
 
+    @Test(arguments: ["td", "hrn", " TD "])
+    func aSkipDropsWhenTheShiftChangesToAnotherShiftType(otherTitle: String) async throws {
+        addHerShiftTypes()
+        roster(allDay("nd", on: "2031-03-03"))
+        try toggleSkip("2031-03-03", "Nachtdienst", in: await arming.run())
+        await arming.run()
+
+        calendarReader.eventsByCalendar["dienste"] = [allDay(otherTitle, on: "2031-03-03")]
+        await arming.run()
+        calendarReader.eventsByCalendar["dienste"] = [allDay("nd", on: "2031-03-03")]
+        let result = await arming.run()
+
+        #expect(armedAlarms == ["2031-03-03 18:30 Nachtdienst"])
+        #expect(Self.shifts(in: result) == ["2031-03-03 Nachtdienst 18:30"])
+    }
+
     /// "Now" is 2031-03-02 20:00, so a Skip for that day is still today's.
     @Test(arguments: [
         ("2031-02-01", false),
@@ -98,10 +114,10 @@ extension ArmingRunTests {
     // MARK: - Fixtures
 
     func toggleSkip(_ date: String, _ name: String, in result: ArmingResult) throws {
-        try container.mainContext.toggleSkip(of: try #require(Self.armedShift(on: date, name, in: result)))
+        try container.mainContext.toggleSkip(of: try #require(Self.windowShift(on: date, name, in: result)))
     }
 
-    static func armedShift(on date: String, _ name: String, in result: ArmingResult) -> ArmedShift? {
+    static func windowShift(on date: String, _ name: String, in result: ArmingResult) -> WindowShift? {
         guard case .armed(let shifts) = result else { return nil }
         return shifts.first { $0.date == instant("\(date) 00:00") && $0.name == name }
     }
