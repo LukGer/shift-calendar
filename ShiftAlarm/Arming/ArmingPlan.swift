@@ -7,8 +7,9 @@ struct ArmingPlan {
 
     /// Each alarm time becomes an instant on the Shift's own date. Instants that have passed or lie beyond
     /// the window are dropped, and identical instants merge into the alarm of the Shift that comes first.
-    /// A skipped Shift wants no alarms.
+    /// A skipped Shift wants no alarms. Shifts before today are left out.
     init(shifts: [Shift], skips: [Skip], now: Date, windowEnd: Date, calendar: Calendar) {
+        let window = calendar.startOfDay(for: now)...windowEnd
         var wantedInstants: Set<Date> = []
         for shift in shifts {
             let shiftType = shift.shiftType
@@ -27,7 +28,7 @@ struct ArmingPlan {
                     ))
                 }
             }
-            if !alarmTimes.isEmpty || (shiftType.alarmSet.isEmpty && shift.date <= windowEnd) {
+            if !alarmTimes.isEmpty || (shiftType.alarmSet.isEmpty && window.contains(shift.date)) {
                 shiftsInWindow.append(ArmedShift(
                     date: shift.date, shiftTypeID: shiftType.id, name: shiftType.name,
                     color: shiftType.color, alarmTimes: alarmTimes, isSkipped: isSkipped))
