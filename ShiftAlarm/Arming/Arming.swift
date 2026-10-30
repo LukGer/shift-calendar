@@ -25,7 +25,25 @@ final class Arming {
         self.clock = clock
     }
 
-    func run() async {
+    /// The latest run's result, for the home screen.
+    private(set) var latestResult: ArmingResult?
+    @ObservationIgnored private var latestRun: Task<ArmingResult, Never>?
+
+    /// Runs one at a time: a run that starts while another is going waits for it to finish.
+    @discardableResult
+    func run() async -> ArmingResult {
+        let previousRun = latestRun
+        let thisRun = Task {
+            _ = await previousRun?.value
+            let result = await arm()
+            latestResult = result
+            return result
+        }
+        latestRun = thisRun
+        return await thisRun.value
+    }
+
+    private func arm() async -> ArmingResult {
         do {
             let context = try openStore().mainContext
             let shiftTypes = try context.fetch(FetchDescriptor<ShiftType>())
@@ -38,22 +56,38 @@ final class Arming {
                 from: calendar.startOfDay(for: now),
                 to: windowEnd
             )
+            var shiftsInWindow: [ArmedShift] = []
             var wantedAlarms: [Date: WantedAlarm] = [:]
             for shift in Shift.recognise(in: events, of: shiftTypes, calendar: calendar) {
-                for time in shift.shiftType.alarmSet {
+                let shiftType = shift.shiftType
+                var alarmTimes: [AlarmTime] = []
+                for time in shiftType.alarmSet {
                     let instant = calendar.date(
                         bySettingHour: time.hour, minute: time.minute, second: 0, of: shift.date)!
-                    guard now < instant, instant <= windowEnd, wantedAlarms[instant] == nil else { continue }
-                    wantedAlarms[instant] = WantedAlarm(
-                        id: Self.alarmID(for: shift, at: time, calendar: calendar),
-                        instant: instant,
-                        title: shift.shiftType.name,
-                        tint: shift.shiftType.color
-                    )
+                    guard now < instant, instant <= windowEnd else { continue }
+                    alarmTimes.append(time)
+                    if wantedAlarms[instant] == nil {
+                        wantedAlarms[instant] = WantedAlarm(
+                            id: Self.alarmID(for: shift, at: time, calendar: calendar),
+                            instant: instant,
+                            title: shiftType.name,
+                            tint: shiftType.color
+                        )
+                    }
+                }
+                let isInWindow = !alarmTimes.isEmpty || (shiftType.alarmSet.isEmpty && shift.date <= windowEnd)
+                if isInWindow {
+                    shiftsInWindow.append(ArmedShift(
+                        date: shift.date, shiftTypeID: shiftType.id, name: shiftType.name,
+                        color: shiftType.color, alarmTimes: alarmTimes))
                 }
             }
             try await armExactly(Array(wantedAlarms.values))
-        } catch {}
+            await notifier.replaceStaleArmingNotification(firingAt: now.addingTimeInterval(48 * 60 * 60))
+            return .armed(shiftsInWindow)
+        } catch {
+            return .failed
+        }
     }
 
     /// Schedules before it cancels, so a run that dies halfway leaves at worst a duplicate, never a gap.

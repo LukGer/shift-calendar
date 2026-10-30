@@ -222,7 +222,62 @@ struct ArmingRunTests {
         #expect(armedAlarms == ["2031-03-03 04:45 Tagdienst"])
     }
 
+    @Test func reportsEachShiftInTheWindowWithTheAlarmTimesThatWillRing() async {
+        addHerShiftTypes()
+        roster(
+            allDay("nd", on: "2031-03-02"),
+            allDay("hrn", on: "2031-03-03"),
+            allDay("td", on: "2031-03-03"),
+            allDay("e6", on: "2031-03-04"),
+            allDay("frei", on: "2031-03-05"),
+            allDay("td", on: "2031-03-10")
+        )
+
+        let result = await arming.run()
+
+        #expect(Self.shifts(in: result) == [
+            "2031-03-03 Tagdienst 05:00",
+            "2031-03-03 Hausrunde 06:15",
+            "2031-03-04 Spät",
+        ])
+    }
+
+    @Test func aSuccessfulRunMovesTheStaleArmingNotificationTo48HoursFromNow() async {
+        await arming.run()
+
+        #expect(notifier.staleArmingNotificationDate == Self.instant("2031-03-04 20:00"))
+    }
+
+    @Test func aRunThatFailsReportsItAndLeavesTheStaleArmingNotificationAlone() async {
+        alarms.arm(WantedAlarm(id: UUID(), instant: Self.instant("2031-03-04 05:00"), title: "Tagdienst", tint: .orange))
+        alarms.cancellingFails = true
+
+        let result = await arming.run()
+
+        #expect(result == .failed)
+        #expect(notifier.staleArmingNotificationDate == nil)
+    }
+
+    @Test func overlappingRunsTakeTurns() async {
+        addHerShiftTypes()
+        roster(allDay("td", on: "2031-03-03"), allDay("nd", on: "2031-03-04"))
+
+        async let first = arming.run()
+        async let second = arming.run()
+        let results = await [first, second]
+
+        #expect(results.allSatisfy { $0 != .failed })
+        #expect(alarms.calls.count == 2)
+    }
+
     // MARK: - Fixtures
+
+    static func shifts(in result: ArmingResult) -> [String] {
+        guard case .armed(let shifts) = result else { return [] }
+        return shifts.map { shift in
+            ([String(text(shift.date).prefix(10)), shift.name] + shift.alarmTimes.map(\.text)).joined(separator: " ")
+        }
+    }
 
     func apply(_ change: Change) throws {
         let context = container.mainContext
