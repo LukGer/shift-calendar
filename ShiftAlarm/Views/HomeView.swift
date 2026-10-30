@@ -52,11 +52,11 @@ struct ArmedShiftsList: View {
                 systemImage: "calendar",
                 description: Text("Days without a Shift ring nothing.")
             )
-        case .failed:
+        case .skipped, .failed:
             ContentUnavailableView(
-                "Alarms couldn't be armed",
+                "Alarms weren't updated",
                 systemImage: "exclamationmark.triangle",
-                description: Text("Shift Alarm tries again the next time you open it.")
+                description: Text("Alarms already armed still ring.")
             )
         case nil:
             ProgressView()

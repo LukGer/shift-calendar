@@ -5,7 +5,13 @@ import SwiftUI
 enum ArmingResult: Equatable {
     /// The Shifts in the Arming Window, in date order.
     case armed([ArmedShift])
+    /// Changed nothing, because the run couldn't see enough to change alarms safely.
+    case skipped(SkipReason)
     case failed
+}
+
+nonisolated enum SkipReason: String, Codable {
+    case calendarNotReadable
 }
 
 struct ArmedShift: Equatable, Identifiable {

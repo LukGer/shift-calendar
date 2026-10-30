@@ -46,6 +46,9 @@ final class Arming {
     private func arm() async -> ArmingResult {
         do {
             let context = try openStore().mainContext
+            guard calendarReader.hasFullAccess, !calendarReader.calendars().isEmpty else {
+                return .skipped(.calendarNotReadable)
+            }
             let now = clock.now
             let calendar = clock.calendar
             let windowEnd = calendar.date(byAdding: .day, value: 7, to: now)!

@@ -268,6 +268,30 @@ struct ArmingRunTests {
         #expect(notifier.staleArmingNotificationDate == nil)
     }
 
+    enum Blindness: CaseIterable {
+        case noFullCalendarAccess, noCalendarsVisible
+    }
+
+    @Test(arguments: [
+        (Blindness.noFullCalendarAccess, SkipReason.calendarNotReadable),
+        (Blindness.noCalendarsVisible, SkipReason.calendarNotReadable),
+    ])
+    func aBlindRunLeavesArmedAlarmsUntouched(blindness: Blindness, reason: SkipReason) async {
+        addHerShiftTypes()
+        roster(allDay("td", on: "2031-03-03"))
+        await arming.run()
+        let armedBefore = armedAlarms
+        let callsBefore = alarms.calls
+        calendarReader.eventsByCalendar["dienste"] = [allDay("nd", on: "2031-03-04")]
+
+        make(blindness)
+        let result = await arming.run()
+
+        #expect(result == .skipped(reason))
+        #expect(alarms.calls == callsBefore)
+        #expect(armedAlarms == armedBefore)
+    }
+
     @Test func overlappingRunsTakeTurns() async {
         addHerShiftTypes()
         roster(allDay("td", on: "2031-03-03"), allDay("nd", on: "2031-03-04"))
@@ -303,6 +327,15 @@ struct ArmingRunTests {
             calendarReader.eventsByCalendar["dienste"] = []
         case .calendarUnchosen:
             try context.fetch(FetchDescriptor<ChosenCalendar>()).forEach(context.delete)
+        }
+    }
+
+    func make(_ blindness: Blindness) {
+        switch blindness {
+        case .noFullCalendarAccess:
+            calendarReader.hasFullAccess = false
+        case .noCalendarsVisible:
+            calendarReader.deviceCalendars = []
         }
     }
 
