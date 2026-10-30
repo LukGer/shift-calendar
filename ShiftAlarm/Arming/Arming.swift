@@ -46,44 +46,20 @@ final class Arming {
     private func arm() async -> ArmingResult {
         do {
             let context = try openStore().mainContext
-            let shiftTypes = try context.fetch(FetchDescriptor<ShiftType>())
-            let chosenCalendars = try context.fetch(FetchDescriptor<ChosenCalendar>())
             let now = clock.now
             let calendar = clock.calendar
             let windowEnd = calendar.date(byAdding: .day, value: 7, to: now)!
             let events = calendarReader.events(
-                inCalendars: chosenCalendars.map(\.identifier),
+                inCalendars: try context.fetch(FetchDescriptor<ChosenCalendar>()).map(\.identifier),
                 from: calendar.startOfDay(for: now),
                 to: windowEnd
             )
-            var shiftsInWindow: [ArmedShift] = []
-            var wantedAlarms: [Date: WantedAlarm] = [:]
-            for shift in Shift.recognise(in: events, of: shiftTypes, calendar: calendar) {
-                let shiftType = shift.shiftType
-                var alarmTimes: [AlarmTime] = []
-                for time in shiftType.alarmSet {
-                    let instant = time.instant(on: shift.date, calendar: calendar)
-                    guard now < instant, instant <= windowEnd else { continue }
-                    alarmTimes.append(time)
-                    if wantedAlarms[instant] == nil {
-                        wantedAlarms[instant] = WantedAlarm(
-                            id: Self.alarmID(for: shift, at: time, calendar: calendar),
-                            instant: instant,
-                            title: shiftType.name,
-                            tint: shiftType.color
-                        )
-                    }
-                }
-                let isInWindow = !alarmTimes.isEmpty || (shiftType.alarmSet.isEmpty && shift.date <= windowEnd)
-                if isInWindow {
-                    shiftsInWindow.append(ArmedShift(
-                        date: shift.date, shiftTypeID: shiftType.id, name: shiftType.name,
-                        color: shiftType.color, alarmTimes: alarmTimes))
-                }
-            }
-            try await armExactly(Array(wantedAlarms.values))
+            let shifts = Shift.recognise(
+                in: events, of: try context.fetch(FetchDescriptor<ShiftType>()), calendar: calendar)
+            let plan = ArmingPlan(shifts: shifts, now: now, windowEnd: windowEnd, calendar: calendar)
+            try await armExactly(plan.wantedAlarms)
             await notifier.replaceStaleArmingNotification(firingAt: now.addingTimeInterval(48 * 60 * 60))
-            return .armed(shiftsInWindow)
+            return .armed(plan.shiftsInWindow)
         } catch {
             return .failed
         }
@@ -98,14 +74,5 @@ final class Arming {
         for id in armedIDs.subtracting(wantedAlarms.map(\.id)) {
             try alarmScheduler.cancel(id: id)
         }
-    }
-
-    private static let alarmIDNamespace = UUID(uuidString: "AF661BC3-756B-422B-A25D-214AE9848CDC")!
-
-    /// Changing the Shift's date, its Shift Type or the alarm time gives a new ID, so an armed ID never needs rescheduling.
-    private static func alarmID(for shift: Shift, at time: AlarmTime, calendar: Calendar) -> UUID {
-        let day = calendar.dateComponents([.year, .month, .day], from: shift.date)
-        let date = String(format: "%04d-%02d-%02d", day.year!, day.month!, day.day!)
-        return UUID(name: "\(date)|\(shift.shiftType.id.uuidString)|\(time.text)", namespace: alarmIDNamespace)
     }
 }

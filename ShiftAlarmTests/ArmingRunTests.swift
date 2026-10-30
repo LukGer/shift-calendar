@@ -242,6 +242,16 @@ struct ArmingRunTests {
         ])
     }
 
+    @Test func keepsAnAlarmSetInTimeOrder() async {
+        let tagdienst = addShiftType("Tagdienst", shortcut: "td", alarmSet: ["05:10", "04:50"])
+        tagdienst.replaceAlarmSet(with: [AlarmTime(hour: 5, minute: 20), AlarmTime(hour: 4, minute: 40)])
+        roster(allDay("td", on: "2031-03-03"))
+
+        let result = await arming.run()
+
+        #expect(Self.shifts(in: result) == ["2031-03-03 Tagdienst 04:40 05:20"])
+    }
+
     @Test func aSuccessfulRunMovesTheStaleArmingNotificationTo48HoursFromNow() async {
         await arming.run()
 
