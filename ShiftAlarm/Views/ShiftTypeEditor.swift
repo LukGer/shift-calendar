@@ -94,8 +94,7 @@ struct ShiftTypeEditor: View {
             shiftType.shortcut = shortcut
             shiftType.replaceAlarmSet(with: alarmSet)
         } else {
-            let nextColorIndex = (shiftTypes.map(\.colorIndex).max() ?? -1) + 1
-            context.insert(ShiftType(name: trimmedName, shortcut: shortcut, alarmSet: alarmSet, colorIndex: nextColorIndex))
+            try? context.addShiftType(name: trimmedName, shortcut: shortcut, alarmSet: alarmSet)
         }
         saveAndArm()
     }

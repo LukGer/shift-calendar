@@ -3,8 +3,6 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var context
-    @Environment(Arming.self) private var arming
     @Query(sort: \ShiftType.createdAt) private var shiftTypes: [ShiftType]
     @Query private var chosenCalendars: [ChosenCalendar]
     @State private var deviceCalendars: [DeviceCalendar] = []
@@ -59,9 +57,7 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    ForEach(deviceCalendars) { calendar in
-                        Toggle(calendar.title, isOn: isChosen(calendar))
-                    }
+                    ChosenCalendarToggles(deviceCalendars: deviceCalendars)
                 } header: {
                     Text("Calendars")
                 } footer: {
@@ -81,35 +77,12 @@ struct SettingsView: View {
                 await AlarmKitScheduler().requestAuthorization()
                 await UserNotificationsNotifier().requestAuthorization()
                 deviceCalendars = calendarReader.calendars()
-                roster = readRoster()
+                roster = calendarReader.roster(in: chosenCalendars)
             }
         }
     }
 
     private var notAShiftType: [String] {
         Shift.unmatchedTitles(in: roster, of: shiftTypes)
-    }
-
-    private func readRoster() -> [CalendarEvent] {
-        let today = Calendar.current.startOfDay(for: .now)
-        let threeMonthsAhead = Calendar.current.date(byAdding: .month, value: 3, to: today)!
-        return calendarReader.events(
-            inCalendars: chosenCalendars.map(\.identifier), from: today, to: threeMonthsAhead)
-    }
-
-    private func isChosen(_ calendar: DeviceCalendar) -> Binding<Bool> {
-        Binding {
-            chosenCalendars.contains { $0.identifier == calendar.identifier }
-        } set: { isOn in
-            if isOn {
-                context.insert(ChosenCalendar(
-                    identifier: calendar.identifier, title: calendar.title,
-                    sourceIdentifier: calendar.sourceIdentifier))
-            } else {
-                chosenCalendars.filter { $0.identifier == calendar.identifier }.forEach(context.delete)
-            }
-            try? context.save()
-            Task { await arming.run() }
-        }
     }
 }
