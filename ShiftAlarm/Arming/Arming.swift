@@ -77,7 +77,7 @@ final class Arming {
         let shifts = Shift.recognise(
             in: events, of: try context.fetch(FetchDescriptor<ShiftType>()), calendar: calendar)
         let plan = ArmingPlan(
-            shifts: shifts, skips: try context.fetch(FetchDescriptor<Skip>()),
+            shifts: shifts, skips: try dropSkipsWhoseShiftTypeChanged(on: shifts, in: context),
             now: now, windowEnd: windowEnd, calendar: calendar)
         try await armExactly(plan.wantedAlarms)
         await notifier.replaceStaleArmingNotification(firingAt: now.addingTimeInterval(48 * 60 * 60))
@@ -102,6 +102,21 @@ final class Arming {
     private func pruneSkips(before today: Date, in context: ModelContext) throws {
         try context.fetch(FetchDescriptor<Skip>(predicate: #Predicate { $0.date < today })).forEach(context.delete)
         try context.save()
+    }
+
+    /// Keeps a Skip whose date has no Shift, so it still applies if the event is added again. Returns the Skips kept.
+    private func dropSkipsWhoseShiftTypeChanged(on shifts: [Shift], in context: ModelContext) throws -> [Skip] {
+        var kept: [Skip] = []
+        for skip in try context.fetch(FetchDescriptor<Skip>()) {
+            let shiftTypeIDs = shifts.filter { $0.date == skip.date }.map(\.shiftType.id)
+            if shiftTypeIDs.isEmpty || shiftTypeIDs.contains(skip.shiftTypeID) {
+                kept.append(skip)
+            } else {
+                context.delete(skip)
+            }
+        }
+        try context.save()
+        return kept
     }
 
     /// Schedules before it cancels, so a run that dies halfway leaves at worst a duplicate, never a gap.
