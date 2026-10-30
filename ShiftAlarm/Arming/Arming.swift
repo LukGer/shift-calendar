@@ -46,15 +46,18 @@ final class Arming {
     private func arm() async -> ArmingResult {
         do {
             let context = try openStore().mainContext
-            guard calendarReader.hasFullAccess, !calendarReader.calendars().isEmpty else {
-                return .skipped(.calendarNotReadable)
+            let deviceCalendars = calendarReader.calendars()
+            guard calendarReader.hasFullAccess, !deviceCalendars.isEmpty else { return .skipped(.calendarNotReadable) }
+            let chosenCalendars = try context.fetch(FetchDescriptor<ChosenCalendar>())
+            guard chosenCalendars.allSatisfy({ $0.isFound(among: deviceCalendars) }) else {
+                return .skipped(.chosenCalendarMissing)
             }
             guard alarmScheduler.isAuthorized else { return .skipped(.alarmsNotAllowed) }
             let now = clock.now
             let calendar = clock.calendar
             let windowEnd = calendar.date(byAdding: .day, value: 7, to: now)!
             let events = calendarReader.events(
-                inCalendars: try context.fetch(FetchDescriptor<ChosenCalendar>()).map(\.identifier),
+                inCalendars: chosenCalendars.map(\.identifier),
                 from: calendar.startOfDay(for: now),
                 to: windowEnd
             )

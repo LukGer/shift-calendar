@@ -12,6 +12,7 @@ enum ArmingResult: Equatable {
 
 nonisolated enum SkipReason: String, Codable {
     case calendarNotReadable
+    case chosenCalendarMissing
     case alarmsNotAllowed
 }
 

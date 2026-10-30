@@ -27,11 +27,3 @@ struct EventKitReader: CalendarReader {
         }
     }
 }
-
-struct DeviceCalendar: Identifiable {
-    let identifier: String
-    let title: String
-    let sourceIdentifier: String
-
-    var id: String { identifier }
-}

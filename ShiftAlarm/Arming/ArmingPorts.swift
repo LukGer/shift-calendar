@@ -28,6 +28,14 @@ protocol WallClock {
     var calendar: Calendar { get }
 }
 
+struct DeviceCalendar: Identifiable {
+    let identifier: String
+    let title: String
+    let sourceIdentifier: String
+
+    var id: String { identifier }
+}
+
 nonisolated struct CalendarEvent {
     var title: String
     var startDate: Date

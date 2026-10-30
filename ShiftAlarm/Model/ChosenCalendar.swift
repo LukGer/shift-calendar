@@ -14,4 +14,14 @@ final class ChosenCalendar {
         self.title = title
         self.sourceIdentifier = sourceIdentifier
     }
+
+    /// Whether it is among the device's calendars. If its identifier is gone, it takes the identifier of
+    /// the one calendar with the same title in the same account; with none or several, it is missing.
+    func isFound(among calendars: [DeviceCalendar]) -> Bool {
+        if calendars.contains(where: { $0.identifier == identifier }) { return true }
+        let sameTitleAndAccount = calendars.filter { $0.title == title && $0.sourceIdentifier == sourceIdentifier }
+        guard sameTitleAndAccount.count == 1 else { return false }
+        identifier = sameTitleAndAccount[0].identifier
+        return true
+    }
 }

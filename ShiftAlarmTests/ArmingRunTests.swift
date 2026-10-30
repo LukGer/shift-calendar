@@ -269,12 +269,15 @@ struct ArmingRunTests {
     }
 
     enum Blindness: CaseIterable {
-        case noFullCalendarAccess, noCalendarsVisible, alarmsNotAllowed
+        case noFullCalendarAccess, noCalendarsVisible, chosenCalendarOnlyInAnotherAccount, chosenCalendarFoundTwice
+        case alarmsNotAllowed
     }
 
     @Test(arguments: [
         (Blindness.noFullCalendarAccess, SkipReason.calendarNotReadable),
         (Blindness.noCalendarsVisible, SkipReason.calendarNotReadable),
+        (Blindness.chosenCalendarOnlyInAnotherAccount, SkipReason.chosenCalendarMissing),
+        (Blindness.chosenCalendarFoundTwice, SkipReason.chosenCalendarMissing),
         (Blindness.alarmsNotAllowed, SkipReason.alarmsNotAllowed),
     ])
     func aBlindRunLeavesArmedAlarmsUntouched(blindness: Blindness, reason: SkipReason) async {
@@ -291,6 +294,20 @@ struct ArmingRunTests {
         #expect(result == .skipped(reason))
         #expect(alarms.calls == callsBefore)
         #expect(armedAlarms == armedBefore)
+    }
+
+    @Test func findsAChosenCalendarAgainByTitleAndAccountWhenItsIdentifierChanges() async throws {
+        addHerShiftTypes()
+        calendarReader.deviceCalendars = [
+            DeviceCalendar(identifier: "dienste-2", title: "Dienste", sourceIdentifier: "icloud"),
+            DeviceCalendar(identifier: "dienste-google", title: "Dienste", sourceIdentifier: "google"),
+        ]
+        roster(allDay("td", on: "2031-03-03"), in: "dienste-2")
+
+        await arming.run()
+
+        #expect(armedAlarms == ["2031-03-03 05:00 Tagdienst"])
+        #expect(try container.mainContext.fetch(FetchDescriptor<ChosenCalendar>()).map(\.identifier) == ["dienste-2"])
     }
 
     @Test func overlappingRunsTakeTurns() async {
@@ -337,6 +354,15 @@ struct ArmingRunTests {
             calendarReader.hasFullAccess = false
         case .noCalendarsVisible:
             calendarReader.deviceCalendars = []
+        case .chosenCalendarOnlyInAnotherAccount:
+            calendarReader.deviceCalendars = [
+                DeviceCalendar(identifier: "dienste-google", title: "Dienste", sourceIdentifier: "google"),
+            ]
+        case .chosenCalendarFoundTwice:
+            calendarReader.deviceCalendars = [
+                DeviceCalendar(identifier: "dienste-2", title: "Dienste", sourceIdentifier: "icloud"),
+                DeviceCalendar(identifier: "dienste-3", title: "Dienste", sourceIdentifier: "icloud"),
+            ]
         case .alarmsNotAllowed:
             alarms.isAuthorized = false
         }
