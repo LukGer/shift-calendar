@@ -6,7 +6,7 @@ extension Arming {
         openStore: { try SharedStore.container() },
         calendarReader: EventKitReader(),
         alarmScheduler: AlarmKitScheduler(),
-        notifier: NoNotifier(),
+        notifier: UserNotificationsNotifier(),
         clock: SystemClock()
     )
 }
