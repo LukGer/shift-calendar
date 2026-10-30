@@ -14,6 +14,12 @@ final class Skip {
     }
 }
 
+extension Shift {
+    func isSkipped(by skips: [Skip]) -> Bool {
+        skips.contains { $0.date == date && $0.shiftTypeID == shiftType.id }
+    }
+}
+
 extension ModelContext {
     /// Skips the Shift, or un-skips it if it is skipped. The next Arming run cancels or re-arms its alarms.
     func toggleSkip(of shift: WindowShift) throws {

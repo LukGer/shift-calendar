@@ -32,11 +32,15 @@ struct DeviceCalendar: Identifiable {
     let identifier: String
     let title: String
     let sourceIdentifier: String
+    let isEditable: Bool
 
     var id: String { identifier }
 }
 
 nonisolated struct CalendarEvent {
+    var identifier: String
+    var calendarIdentifier: String
+    var isRecurring: Bool
     var title: String
     var startDate: Date
     var endDate: Date

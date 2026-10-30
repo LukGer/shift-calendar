@@ -4,15 +4,24 @@ import Foundation
 @MainActor
 final class FakeCalendarReader: CalendarReader {
     var hasFullAccess = true
-    var deviceCalendars = [DeviceCalendar(identifier: "dienste", title: "Dienste", sourceIdentifier: "icloud")]
+    var deviceCalendars = [
+        DeviceCalendar(identifier: "dienste", title: "Dienste", sourceIdentifier: "icloud", isEditable: true),
+    ]
     var eventsByCalendar: [String: [CalendarEvent]] = [:]
 
     func calendars() -> [DeviceCalendar] {
         deviceCalendars
     }
 
+    /// Like EventKit, each event reports the calendar it is in.
     func events(inCalendars identifiers: [String], from start: Date, to end: Date) -> [CalendarEvent] {
-        identifiers.flatMap { eventsByCalendar[$0] ?? [] }
+        identifiers.flatMap { identifier in
+            (eventsByCalendar[identifier] ?? []).map { event in
+                var event = event
+                event.calendarIdentifier = identifier
+                return event
+            }
+        }
     }
 }
 

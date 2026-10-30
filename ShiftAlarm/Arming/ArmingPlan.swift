@@ -13,7 +13,7 @@ struct ArmingPlan {
         var wantedInstants: Set<Date> = []
         for shift in shifts {
             let shiftType = shift.shiftType
-            let isSkipped = skips.contains { $0.date == shift.date && $0.shiftTypeID == shiftType.id }
+            let isSkipped = shift.isSkipped(by: skips)
             var alarmTimes: [AlarmTime] = []
             for time in shiftType.alarmSet {
                 let instant = time.instant(on: shift.date, calendar: calendar)

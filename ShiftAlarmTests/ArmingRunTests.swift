@@ -349,8 +349,8 @@ struct ArmingRunTests {
     @Test func findsAChosenCalendarAgainByTitleAndAccountWhenItsIdentifierChanges() async throws {
         addHerShiftTypes()
         calendarReader.deviceCalendars = [
-            DeviceCalendar(identifier: "dienste-2", title: "Dienste", sourceIdentifier: "icloud"),
-            DeviceCalendar(identifier: "dienste-google", title: "Dienste", sourceIdentifier: "google"),
+            DeviceCalendar(identifier: "dienste-2", title: "Dienste", sourceIdentifier: "icloud", isEditable: true),
+            DeviceCalendar(identifier: "dienste-google", title: "Dienste", sourceIdentifier: "google", isEditable: true),
         ]
         roster(allDay("td", on: "2031-03-03"), in: "dienste-2")
 
@@ -412,12 +412,12 @@ struct ArmingRunTests {
             calendarReader.deviceCalendars = []
         case .chosenCalendarOnlyInAnotherAccount:
             calendarReader.deviceCalendars = [
-                DeviceCalendar(identifier: "dienste-google", title: "Dienste", sourceIdentifier: "google"),
+                DeviceCalendar(identifier: "dienste-google", title: "Dienste", sourceIdentifier: "google", isEditable: true),
             ]
         case .chosenCalendarFoundTwice:
             calendarReader.deviceCalendars = [
-                DeviceCalendar(identifier: "dienste-2", title: "Dienste", sourceIdentifier: "icloud"),
-                DeviceCalendar(identifier: "dienste-3", title: "Dienste", sourceIdentifier: "icloud"),
+                DeviceCalendar(identifier: "dienste-2", title: "Dienste", sourceIdentifier: "icloud", isEditable: true),
+                DeviceCalendar(identifier: "dienste-3", title: "Dienste", sourceIdentifier: "icloud", isEditable: true),
             ]
         case .alarmsNotAllowed:
             alarms.isAuthorized = false
@@ -460,6 +460,9 @@ struct ArmingRunTests {
     /// EventKit reports an all-day event's end as 23:59:59 on its last day.
     func allDay(_ title: String, from first: String, through last: String) -> CalendarEvent {
         CalendarEvent(
+            identifier: UUID().uuidString,
+            calendarIdentifier: "",
+            isRecurring: false,
             title: title,
             startDate: Self.instant("\(first) 00:00"),
             endDate: Self.instant("\(last) 23:59").addingTimeInterval(59),
@@ -470,6 +473,7 @@ struct ArmingRunTests {
     func timed(_ title: String, at start: String) -> CalendarEvent {
         let startDate = Self.instant(start)
         return CalendarEvent(
+            identifier: UUID().uuidString, calendarIdentifier: "", isRecurring: false,
             title: title, startDate: startDate, endDate: startDate.addingTimeInterval(8 * 60 * 60), isAllDay: false)
     }
 

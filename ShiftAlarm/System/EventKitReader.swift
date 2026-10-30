@@ -13,7 +13,9 @@ struct EventKitReader: CalendarReader {
 
     func calendars() -> [DeviceCalendar] {
         EKEventStore().calendars(for: .event).map {
-            DeviceCalendar(identifier: $0.calendarIdentifier, title: $0.title, sourceIdentifier: $0.source.sourceIdentifier)
+            DeviceCalendar(
+                identifier: $0.calendarIdentifier, title: $0.title, sourceIdentifier: $0.source.sourceIdentifier,
+                isEditable: $0.allowsContentModifications)
         }
     }
 
@@ -23,7 +25,10 @@ struct EventKitReader: CalendarReader {
         guard !calendars.isEmpty else { return [] }  // EventKit searches every calendar when given none
         let predicate = store.predicateForEvents(withStart: start, end: end, calendars: calendars)
         return store.events(matching: predicate).map {
-            CalendarEvent(title: $0.title ?? "", startDate: $0.startDate, endDate: $0.endDate, isAllDay: $0.isAllDay)
+            CalendarEvent(
+                identifier: $0.eventIdentifier, calendarIdentifier: $0.calendar.calendarIdentifier,
+                isRecurring: $0.hasRecurrenceRules, title: $0.title ?? "",
+                startDate: $0.startDate, endDate: $0.endDate, isAllDay: $0.isAllDay)
         }
     }
 }

@@ -62,7 +62,11 @@ final class Arming {
         return result
     }
 
-    private static let armingWindow = DateComponents(day: 7)
+    /// From the start of today until about 7 days from now.
+    static func armingWindow(at now: Date, calendar: Calendar) -> ClosedRange<Date> {
+        calendar.startOfDay(for: now)...calendar.date(byAdding: .day, value: 7, to: now)!
+    }
+
     private static let staleArmingDelay: TimeInterval = 48 * 60 * 60
 
     private func arm(in context: ModelContext, now: Date) async throws -> ArmingResult {
@@ -70,17 +74,17 @@ final class Arming {
         try pruneSkips(before: calendar.startOfDay(for: now), in: context)
         let chosenCalendars = try context.fetch(FetchDescriptor<ChosenCalendar>())
         if let reason = reasonToChangeNoAlarm(chosenCalendars: chosenCalendars) { return .skipped(reason) }
-        let windowEnd = calendar.date(byAdding: Self.armingWindow, to: now)!
+        let window = Self.armingWindow(at: now, calendar: calendar)
         let events = calendarReader.events(
             inCalendars: chosenCalendars.map(\.identifier),
-            from: calendar.startOfDay(for: now),
-            to: windowEnd
+            from: window.lowerBound,
+            to: window.upperBound
         )
         let shifts = Shift.recognise(
             in: events, of: try context.fetch(FetchDescriptor<ShiftType>()), calendar: calendar)
         let plan = ArmingPlan(
             shifts: shifts, skips: try dropSkipsWhoseShiftTypeChanged(on: shifts, in: context),
-            now: now, windowEnd: windowEnd, calendar: calendar)
+            now: now, windowEnd: window.upperBound, calendar: calendar)
         try await armExactly(plan.wantedAlarms)
         await notifier.replaceStaleArmingNotification(firingAt: now.addingTimeInterval(Self.staleArmingDelay))
         return .armed(plan.shiftsInWindow)
