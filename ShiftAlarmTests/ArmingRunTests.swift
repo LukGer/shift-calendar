@@ -312,6 +312,29 @@ struct ArmingRunTests {
         #expect(notifier.staleArmingNotificationDate == Self.instant("2031-03-04 20:00"))
     }
 
+    @Test func aRunBeforeTheFirstUnlockLeavesArmedAlarmsUntouched() async {
+        addHerShiftTypes()
+        roster(allDay("td", on: "2031-03-03"))
+        await arming.run()
+        let armedBefore = armedAlarms
+        let callsBefore = alarms.calls
+        calendarReader.hasFullAccess = false
+        calendarReader.deviceCalendars = []
+        struct StoreLocked: Error {}
+        let armingBeforeFirstUnlock = Arming(
+            openStore: { throw StoreLocked() },
+            calendarReader: calendarReader,
+            alarmScheduler: alarms,
+            notifier: notifier,
+            clock: clock
+        )
+
+        await armingBeforeFirstUnlock.run()
+
+        #expect(alarms.calls == callsBefore)
+        #expect(armedAlarms == armedBefore)
+    }
+
     @Test func findsAChosenCalendarAgainByTitleAndAccountWhenItsIdentifierChanges() async throws {
         addHerShiftTypes()
         calendarReader.deviceCalendars = [

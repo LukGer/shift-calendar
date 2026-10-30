@@ -4,5 +4,13 @@
 <dict>
 	<key>NSAlarmKitUsageDescription</key>
 	<string>Shift Alarm rings the alarms for your Shifts, even in silent mode and Focus.</string>
+	<key>BGTaskSchedulerPermittedIdentifiers</key>
+	<array>
+		<string>dev.lukger.shiftalarm.arm</string>
+	</array>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>fetch</string>
+	</array>
 </dict>
 </plist>

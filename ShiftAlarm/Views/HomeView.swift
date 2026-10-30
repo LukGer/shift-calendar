@@ -1,7 +1,8 @@
+import EventKit
 import SwiftData
 import SwiftUI
 
-/// Arms on launch and on every return to the foreground, and shows what the latest run armed.
+/// Arms on launch, on every return to the foreground and whenever her calendar changes, and shows what the latest run armed.
 struct HomeView: View {
     @Environment(Arming.self) private var arming
     @Environment(\.modelContext) private var context
@@ -9,6 +10,8 @@ struct HomeView: View {
     @State private var isShowingSettings = false
     @State private var notificationsAllowed = true
     @AppStorage("hasFinishedWalkthrough") private var hasFinishedWalkthrough = false
+    /// EventKit only posts calendar changes while an event store is alive.
+    @State private var watchedEventStore = EKEventStore()
 
     var body: some View {
         NavigationStack {
@@ -30,6 +33,9 @@ struct HomeView: View {
                 Task { await arming.run() }
                 Task { notificationsAllowed = await UserNotificationsNotifier().isAuthorized() }
             }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .EKEventStoreChanged, object: watchedEventStore)) { _ in
+            Task { await arming.run() }
         }
     }
 
