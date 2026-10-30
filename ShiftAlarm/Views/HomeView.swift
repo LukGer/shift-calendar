@@ -8,6 +8,7 @@ struct HomeView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var isShowingSettings = false
     @State private var notificationsAllowed = true
+    @AppStorage("hasFinishedWalkthrough") private var hasFinishedWalkthrough = false
 
     var body: some View {
         NavigationStack {
@@ -20,6 +21,9 @@ struct HomeView: View {
                 .sheet(isPresented: $isShowingSettings) {
                     SettingsView()
                 }
+                .fullScreenCover(isPresented: isShowingWalkthrough) {
+                    Walkthrough()
+                }
         }
         .onChange(of: scenePhase, initial: true) { _, phase in
             if phase == .active {
@@ -27,6 +31,11 @@ struct HomeView: View {
                 Task { notificationsAllowed = await UserNotificationsNotifier().isAuthorized() }
             }
         }
+    }
+
+    /// Shown on every launch until she finishes it.
+    private var isShowingWalkthrough: Binding<Bool> {
+        Binding { !hasFinishedWalkthrough } set: { hasFinishedWalkthrough = !$0 }
     }
 
     private func toggleSkip(of shift: ArmedShift) {
