@@ -114,10 +114,10 @@ extension ArmingRunTests {
     // MARK: - Fixtures
 
     func toggleSkip(_ date: String, _ name: String, in result: ArmingResult) throws {
-        try container.mainContext.toggleSkip(of: try #require(Self.armedShift(on: date, name, in: result)))
+        try container.mainContext.toggleSkip(of: try #require(Self.windowShift(on: date, name, in: result)))
     }
 
-    static func armedShift(on date: String, _ name: String, in result: ArmingResult) -> ArmedShift? {
+    static func windowShift(on date: String, _ name: String, in result: ArmingResult) -> WindowShift? {
         guard case .armed(let shifts) = result else { return nil }
         return shifts.first { $0.date == instant("\(date) 00:00") && $0.name == name }
     }

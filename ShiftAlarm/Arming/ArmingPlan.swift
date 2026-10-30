@@ -2,7 +2,7 @@ import Foundation
 
 /// Which alarms the Shifts in the Arming Window want, and what the home screen shows for them.
 struct ArmingPlan {
-    private(set) var shiftsInWindow: [ArmedShift] = []
+    private(set) var shiftsInWindow: [WindowShift] = []
     private(set) var wantedAlarms: [WantedAlarm] = []
 
     /// Each alarm time becomes an instant on the Shift's own date. Instants that have passed or lie beyond
@@ -29,7 +29,7 @@ struct ArmingPlan {
                 }
             }
             if !alarmTimes.isEmpty || (shiftType.alarmSet.isEmpty && window.contains(shift.date)) {
-                shiftsInWindow.append(ArmedShift(
+                shiftsInWindow.append(WindowShift(
                     date: shift.date, shiftTypeID: shiftType.id, name: shiftType.name,
                     color: shiftType.color, alarmTimes: alarmTimes, isSkipped: isSkipped))
             }

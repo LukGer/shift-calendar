@@ -43,7 +43,7 @@ struct HomeView: View {
         Binding { !hasFinishedWalkthrough } set: { hasFinishedWalkthrough = !$0 }
     }
 
-    private func toggleSkip(of shift: ArmedShift) {
+    private func toggleSkip(of shift: WindowShift) {
         try? context.toggleSkip(of: shift)
         Task { await arming.run() }
     }
@@ -53,7 +53,7 @@ struct HomeView: View {
 struct NextShiftView: View {
     let result: ArmingResult?
     var notificationPermission: NotificationPermission?
-    let toggleSkip: (ArmedShift) -> Void
+    let toggleSkip: (WindowShift) -> Void
 
     private let daysWithoutAShift: LocalizedStringKey = "Days without a Shift ring nothing."
 
@@ -89,8 +89,8 @@ struct NextShiftView: View {
 }
 
 private struct NextShiftCard: View {
-    let shift: ArmedShift
-    let toggleSkip: (ArmedShift) -> Void
+    let shift: WindowShift
+    let toggleSkip: (WindowShift) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -132,8 +132,8 @@ private struct NextShiftCard: View {
 }
 
 private struct LaterThisWeek: View {
-    let shifts: ArraySlice<ArmedShift>
-    let toggleSkip: (ArmedShift) -> Void
+    let shifts: ArraySlice<WindowShift>
+    let toggleSkip: (WindowShift) -> Void
 
     var body: some View {
         if !shifts.isEmpty {
@@ -172,15 +172,15 @@ private struct LaterThisWeek: View {
     }
 }
 
-private extension ArmedShift {
+private extension WindowShift {
     func skippedOr(_ rings: String) -> String {
         isSkipped ? "Skipped" : rings
     }
 }
 
 private struct SkipButton: View {
-    let shift: ArmedShift
-    let toggleSkip: (ArmedShift) -> Void
+    let shift: WindowShift
+    let toggleSkip: (WindowShift) -> Void
 
     var body: some View {
         Button(shift.isSkipped ? "Ring for this Shift" : "Skip this Shift", systemImage: "moon.zzz") {
@@ -232,12 +232,12 @@ private struct SkipButton: View {
     }
 }
 
-private extension ArmedShift {
+private extension WindowShift {
     static func preview(
         inDays days: Int, _ name: String, _ color: Color, alarmTimes: [String], isSkipped: Bool = false
-    ) -> ArmedShift {
+    ) -> WindowShift {
         let calendar = Calendar.current
-        return ArmedShift(
+        return WindowShift(
             date: calendar.date(byAdding: .day, value: days, to: calendar.startOfDay(for: .now))!,
             shiftTypeID: UUID(),
             name: name,
