@@ -189,7 +189,9 @@ private struct LaterThisWeek: View {
 }
 
 private extension ArmedShift {
-    static func preview(inDays days: Int, _ name: String, _ color: Color, alarmTimes: [String]) -> ArmedShift {
+    static func preview(
+        inDays days: Int, _ name: String, _ color: Color, alarmTimes: [String], isSkipped: Bool = false
+    ) -> ArmedShift {
         let calendar = Calendar.current
         return ArmedShift(
             date: calendar.date(byAdding: .day, value: days, to: calendar.startOfDay(for: .now))!,
@@ -199,7 +201,8 @@ private extension ArmedShift {
             alarmTimes: alarmTimes.map { text in
                 let parts = text.split(separator: ":").compactMap { Int($0) }
                 return AlarmTime(hour: parts[0], minute: parts[1])
-            }
+            },
+            isSkipped: isSkipped
         )
     }
 }

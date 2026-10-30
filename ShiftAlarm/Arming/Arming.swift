@@ -49,6 +49,7 @@ final class Arming {
             let now = clock.now
             let calendar = clock.calendar
             let windowEnd = calendar.date(byAdding: .day, value: 7, to: now)!
+            try pruneSkips(before: calendar.startOfDay(for: now), in: context)
             let events = calendarReader.events(
                 inCalendars: try context.fetch(FetchDescriptor<ChosenCalendar>()).map(\.identifier),
                 from: calendar.startOfDay(for: now),
@@ -56,13 +57,20 @@ final class Arming {
             )
             let shifts = Shift.recognise(
                 in: events, of: try context.fetch(FetchDescriptor<ShiftType>()), calendar: calendar)
-            let plan = ArmingPlan(shifts: shifts, now: now, windowEnd: windowEnd, calendar: calendar)
+            let plan = ArmingPlan(
+                shifts: shifts, skips: try context.fetch(FetchDescriptor<Skip>()),
+                now: now, windowEnd: windowEnd, calendar: calendar)
             try await armExactly(plan.wantedAlarms)
             await notifier.replaceStaleArmingNotification(firingAt: now.addingTimeInterval(48 * 60 * 60))
             return .armed(plan.shiftsInWindow)
         } catch {
             return .failed
         }
+    }
+
+    private func pruneSkips(before today: Date, in context: ModelContext) throws {
+        try context.fetch(FetchDescriptor<Skip>(predicate: #Predicate { $0.date < today })).forEach(context.delete)
+        try context.save()
     }
 
     /// Schedules before it cancels, so a run that dies halfway leaves at worst a duplicate, never a gap.
