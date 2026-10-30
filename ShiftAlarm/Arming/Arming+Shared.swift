@@ -1,0 +1,26 @@
+import SwiftData
+
+extension Arming {
+    /// The run every trigger in the app calls.
+    static let shared = Arming(
+        openStore: { try SharedStore.container() },
+        calendarReader: EventKitReader(),
+        alarmScheduler: AlarmKitScheduler(),
+        notifier: NoNotifier(),
+        clock: SystemClock()
+    )
+}
+
+/// The one SwiftData store the screens and the Arming run share.
+enum SharedStore {
+    private static var opened: ModelContainer?
+
+    /// Throws instead of crashing, and tries again on the next call: before the first unlock after a reboot
+    /// the store's file can't be opened.
+    static func container() throws -> ModelContainer {
+        if let opened { return opened }
+        let container = try ModelContainer(for: ShiftType.self, ChosenCalendar.self)
+        opened = container
+        return container
+    }
+}

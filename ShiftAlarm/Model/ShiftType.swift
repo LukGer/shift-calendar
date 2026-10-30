@@ -33,8 +33,29 @@ nonisolated struct AlarmTime: Codable, Hashable, Comparable {
         (lhs.hour, lhs.minute) < (rhs.hour, rhs.minute)
     }
 
+    init(hour: Int, minute: Int) {
+        self.hour = hour
+        self.minute = minute
+    }
+
+    init(of date: Date, calendar: Calendar) {
+        let components = calendar.dateComponents([.hour, .minute], from: date)
+        self.init(hour: components.hour!, minute: components.minute!)
+    }
+
+    func instant(on day: Date, calendar: Calendar) -> Date {
+        calendar.date(bySettingHour: hour, minute: minute, second: 0, of: day)!
+    }
+
     var text: String {
         String(format: "%02d:%02d", hour, minute)
+    }
+}
+
+extension [AlarmTime] {
+    /// "05:00 · 05:10", or "Rings nothing" when empty.
+    var summary: String {
+        isEmpty ? "Rings nothing" : map(\.text).joined(separator: " · ")
     }
 }
 

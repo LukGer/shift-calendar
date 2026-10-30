@@ -5,14 +5,14 @@ import SwiftData
 /// The one operation every trigger calls: makes AlarmKit hold exactly the alarms for every Shift in the Arming Window.
 @Observable
 final class Arming {
-    @ObservationIgnored private let openStore: () throws -> ModelContainer
+    @ObservationIgnored private let openStore: @MainActor () throws -> ModelContainer
     @ObservationIgnored private let calendarReader: CalendarReader
     @ObservationIgnored private let alarmScheduler: AlarmScheduler
     @ObservationIgnored private let notifier: Notifier
     @ObservationIgnored private let clock: WallClock
 
     init(
-        openStore: @escaping () throws -> ModelContainer,
+        openStore: @escaping @MainActor () throws -> ModelContainer,
         calendarReader: CalendarReader,
         alarmScheduler: AlarmScheduler,
         notifier: Notifier,
@@ -62,8 +62,7 @@ final class Arming {
                 let shiftType = shift.shiftType
                 var alarmTimes: [AlarmTime] = []
                 for time in shiftType.alarmSet {
-                    let instant = calendar.date(
-                        bySettingHour: time.hour, minute: time.minute, second: 0, of: shift.date)!
+                    let instant = time.instant(on: shift.date, calendar: calendar)
                     guard now < instant, instant <= windowEnd else { continue }
                     alarmTimes.append(time)
                     if wantedAlarms[instant] == nil {
