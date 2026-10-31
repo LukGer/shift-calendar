@@ -32,11 +32,11 @@ extension CalendarStore {
         let month = calendar.dateInterval(of: .month, for: day)!
         let firstDay = calendar.dateInterval(of: .weekOfYear, for: month.start)!.start
         let lastWeek = calendar.dateInterval(of: .weekOfYear, for: month.end.addingTimeInterval(-1))!
-        let events = events(inCalendars: chosenCalendars.map(\.identifier), from: firstDay, to: lastWeek.end)
         let shiftsByDate = Dictionary(
-            grouping: Shift.recogniseWithEvents(in: events, of: shiftTypes, calendar: calendar), by: \.shift.date)
+            grouping: shiftsWithEvents(
+                in: chosenCalendars, of: shiftTypes, from: firstDay, to: lastWeek.end, clock: clock),
+            by: \.shift.date)
         let armingWindow = Arming.armingWindow(at: clock.now, calendar: calendar)
-        let editableCalendars = Set(calendars().filter(\.isEditable).map(\.identifier))
         var days: [GridDay] = []
         var date = firstDay
         while date < lastWeek.end {
@@ -44,20 +44,36 @@ extension CalendarStore {
                 date: date,
                 isInMonth: calendar.isDate(date, equalTo: day, toGranularity: .month),
                 isToday: date == armingWindow.lowerBound,
-                shifts: (shiftsByDate[date] ?? []).map { shift, events in
+                shifts: (shiftsByDate[date] ?? []).map { shift, _, isLocked in
                     GridShift(
                         shiftType: shift.shiftType,
                         isSkipped: shift.isSkipped(by: skips),
                         isInArmingWindow: armingWindow.contains(shift.date),
-                        isLocked: shift.date < armingWindow.lowerBound || !events.allSatisfy {
-                            $0.isPlannable(inEditableCalendars: editableCalendars, calendar: calendar)
-                        }
+                        isLocked: isLocked
                     )
                 }
             ))
             date = calendar.date(byAdding: .day, value: 1, to: date)!
         }
         return days
+    }
+
+    /// The Shifts in her chosen calendars from `start` until `end`, each with the events it is recognised in and
+    /// whether it is locked: past, or behind an event Planning can't delete cleanly.
+    func shiftsWithEvents(
+        in chosenCalendars: [ChosenCalendar], of shiftTypes: [ShiftType], from start: Date, to end: Date,
+        clock: WallClock
+    ) -> [(shift: Shift, events: [CalendarEvent], isLocked: Bool)] {
+        let calendar = clock.calendar
+        let today = calendar.startOfDay(for: clock.now)
+        let editableCalendars = Set(calendars().filter(\.isEditable).map(\.identifier))
+        let events = events(inCalendars: chosenCalendars.map(\.identifier), from: start, to: end)
+        return Shift.recogniseWithEvents(in: events, of: shiftTypes, calendar: calendar).map { shift, events in
+            let isLocked = shift.date < today || !events.allSatisfy {
+                $0.isPlannable(inEditableCalendars: editableCalendars, calendar: calendar)
+            }
+            return (shift, events, isLocked)
+        }
     }
 }
 

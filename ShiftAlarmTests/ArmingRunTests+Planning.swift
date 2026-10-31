@@ -8,6 +8,7 @@ import Testing
 extension ArmingRunTests {
     @Test(arguments: [
         ("td", "2031-03-03", ["2031-03-03 05:00 Tagdienst"]),
+        ("td", "2031-03-02", []),
         ("nd", "2031-03-09", ["2031-03-09 18:30 Nachtdienst"]),
         ("hrn", "2031-03-20", []),
         ("e6", "2031-03-03", []),
@@ -48,6 +49,30 @@ extension ArmingRunTests {
         try await plan("td", on: "2031-03-03")
 
         #expect(calendarHolds == ["\(expected) 2031-03-03 td"])
+    }
+
+    @Test(arguments: [
+        (ChosenCalendars.onlyOneSheCantEdit, "2031-03-03", [], PlanningRefusal.noPlanningCalendar),
+        (.none, "2031-03-03", [], .noPlanningCalendar),
+        (.oneEditable, "2031-03-01", [], .pastDay),
+        (.oneEditable, "2031-02-15", [], .pastDay),
+        (.oneEditable, "2031-03-03", [("td", "2031-03-03", "2031-03-03")], .alreadyPlanned),
+        (.oneEditable, "2031-03-03", [(" TD ", "2031-03-03", "2031-03-03")], .alreadyPlanned),
+        (.oneEditable, "2031-03-03", [("td", "2031-03-02", "2031-03-04")], .alreadyPlanned),
+    ])
+    func tickingRefusesWithoutAPlanningCalendarOnAPastDayOrWhenTheShiftIsAlreadyThere(
+        chosen: ChosenCalendars, date: String, alreadyThere: [(String, String, String)], refusal: PlanningRefusal
+    ) async throws {
+        addHerShiftTypes()
+        try choose(chosen)
+        for (title, first, last) in alreadyThere {
+            roster(allDay(title, from: first, through: last))
+        }
+        let before = calendarHolds
+
+        await #expect(throws: refusal) { try await plan("td", on: date) }
+
+        #expect(calendarHolds == before)
     }
 
     // MARK: - Fixtures

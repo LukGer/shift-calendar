@@ -15,13 +15,24 @@ struct Planning {
         guard let planningCalendar = chosenCalendars.planningCalendar(among: calendarStore.calendars()) else {
             throw PlanningRefusal.noPlanningCalendar
         }
+        guard date >= clock.calendar.startOfDay(for: clock.now) else { throw PlanningRefusal.pastDay }
+        guard shift(of: shiftType, on: date, in: chosenCalendars) == nil else { throw PlanningRefusal.alreadyPlanned }
         try calendarStore.addAllDayEvent(
             titled: shiftType.shortcut, on: date, inCalendar: planningCalendar.identifier)
         await arming.run()
+    }
+
+    private func shift(
+        of shiftType: ShiftType, on date: Date, in chosenCalendars: [ChosenCalendar]
+    ) -> (shift: Shift, events: [CalendarEvent], isLocked: Bool)? {
+        let nextDay = clock.calendar.date(byAdding: .day, value: 1, to: date)!
+        return calendarStore.shiftsWithEvents(
+            in: chosenCalendars, of: [shiftType], from: date, to: nextDay, clock: clock
+        ).first { $0.shift.date == date }
     }
 }
 
 /// Why Planning left her calendar alone.
 enum PlanningRefusal: Error {
-    case noPlanningCalendar
+    case noPlanningCalendar, pastDay, alreadyPlanned
 }
