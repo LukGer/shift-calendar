@@ -151,7 +151,7 @@ struct CalendarHome: View {
     NavigationStack {
         CalendarHome(
             result: .armed([.preview(inDays: 1, PreviewRoster.tagdienst, alarmTimes: ["05:00", "05:10", "05:20"])]),
-            month: .now, days: PreviewRoster(clock: SystemClock()).busyMonth, calendar: .current,
+            month: .now, days: PreviewRoster.busyMonth, calendar: .current,
             showMonth: { _ in }, openDay: { _ in }, toggleSkip: { _ in })
             .navigationTitle("Shifts")
     }
@@ -160,7 +160,7 @@ struct CalendarHome: View {
 #Preview("Banner") {
     NavigationStack {
         CalendarHome(
-            result: .failed, month: .now, days: PreviewRoster(clock: SystemClock()).busyMonth, calendar: .current,
+            result: .failed, month: .now, days: PreviewRoster.busyMonth, calendar: .current,
             showMonth: { _ in }, openDay: { _ in }, toggleSkip: { _ in })
             .navigationTitle("Shifts")
     }

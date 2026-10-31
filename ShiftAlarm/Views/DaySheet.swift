@@ -26,12 +26,12 @@ struct DaySheet: View {
                     ForEach(day.shifts, id: \.shiftType.id, content: shiftActions)
                     if !hasPlanningCalendar && !day.isPast {
                         SettingsNotice(
-                            title: "Read-only", message: "Choose a calendar you can edit in Settings.",
+                            title: "Read-only", message: PlanningRefusal.noPlanningCalendar.explanation,
                             openSettings: openSettings)
                     }
                 }
             }
-            .navigationTitle(day.date.formatted(.dateTime.weekday(.wide).day().month(.wide)))
+            .navigationTitle(day.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -74,7 +74,7 @@ struct DaySheet: View {
                 Text(refusal)
                     .foregroundStyle(.red)
             } else if day.isPast {
-                Text("Past days can't be changed.")
+                Text(PlanningRefusal.pastDay.explanation)
             }
         }
     }
@@ -82,12 +82,7 @@ struct DaySheet: View {
     private func shiftActions(for shift: GridShift) -> some View {
         Section(shift.shiftType.name) {
             if !day.isPast {
-                Button(
-                    shift.isSkipped ? "Ring for this Shift" : "Skip this Shift",
-                    systemImage: shift.isSkipped ? "bell" : "moon.zzz"
-                ) {
-                    toggleSkip(shift)
-                }
+                SkipButton(isSkipped: shift.isSkipped) { toggleSkip(shift) }
             }
             NavigationLink {
                 ShiftTypeEditor(shiftType: shift.shiftType)
@@ -145,12 +140,9 @@ private extension PlanningRefusal {
 }
 
 private extension PreviewRoster {
-    static let shiftTypes = [tagdienst, nachtdienst, hausrunde, ambulanz, spät]
-
     static func day(inDays days: Int, _ shifts: [GridShift]) -> GridDay {
-        let calendar = Calendar.current
-        return GridDay(
-            date: calendar.date(byAdding: .day, value: days, to: calendar.startOfDay(for: .now))!,
+        GridDay(
+            date: date(inDays: days),
             isInMonth: true, isToday: days == 0, isPast: days < 0, shifts: shifts)
     }
 

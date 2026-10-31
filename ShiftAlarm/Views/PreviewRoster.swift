@@ -8,6 +8,7 @@ struct PreviewRoster: CalendarStore {
     static let hausrunde = ShiftType(name: "Hausrunde", shortcut: "hrn", alarmSet: [.init(hour: 6, minute: 15)], colorIndex: 2)
     static let ambulanz = ShiftType(name: "Ambulanz", shortcut: "a11", alarmSet: [.init(hour: 9, minute: 0)], colorIndex: 3)
     static let spät = ShiftType(name: "Spät", shortcut: "e6", alarmSet: [], colorIndex: 4)
+    static let shiftTypes = [tagdienst, nachtdienst, hausrunde, ambulanz, spät]
 
     private static let shortcutsByDayFromToday: [Int: [String]] = [
         -9: ["td"], -8: ["td"], -7: ["nd"], -6: ["nd"], -3: ["hrn"], -1: ["td"],
@@ -15,7 +16,6 @@ struct PreviewRoster: CalendarStore {
         9: ["td"], 11: ["nd"], 12: ["nd"], 14: ["hrn"], 15: ["td"], 16: ["td", "a11"], 17: ["a11"], 20: ["td"],
     ]
 
-    let clock: WallClock
     let hasFullAccess = true
 
     func calendars() -> [DeviceCalendar] {
@@ -25,7 +25,7 @@ struct PreviewRoster: CalendarStore {
     func events(inCalendars identifiers: [String], from start: Date, to end: Date) -> [CalendarEvent] {
         Self.shortcutsByDayFromToday.flatMap { days, shortcuts in
             shortcuts.map { shortcut in
-                let date = day(days)
+                let date = Self.date(inDays: days)
                 return CalendarEvent(
                     identifier: "\(days)\(shortcut)", calendarIdentifier: "dienste", isRecurring: false,
                     title: shortcut, startDate: date, endDate: date.addingTimeInterval(24 * 60 * 60 - 1),
@@ -39,22 +39,22 @@ struct PreviewRoster: CalendarStore {
     func deleteEvent(identifier: String) {}
 
     /// The month containing today.
-    var busyMonth: [GridDay] {
-        monthOfShifts(
-            containing: clock.now,
+    static var busyMonth: [GridDay] {
+        PreviewRoster().monthOfShifts(
+            containing: .now,
             in: [ChosenCalendar(identifier: "dienste", title: "Dienste", sourceIdentifier: "icloud")],
-            of: [Self.tagdienst, Self.nachtdienst, Self.hausrunde, Self.ambulanz, Self.spät],
+            of: shiftTypes,
             skips: [
-                Skip(date: day(1), shiftTypeID: Self.hausrunde.id),
-                Skip(date: day(3), shiftTypeID: Self.nachtdienst.id),
-                Skip(date: day(14), shiftTypeID: Self.hausrunde.id),
+                Skip(date: date(inDays: 1), shiftTypeID: hausrunde.id),
+                Skip(date: date(inDays: 3), shiftTypeID: nachtdienst.id),
+                Skip(date: date(inDays: 14), shiftTypeID: hausrunde.id),
             ],
-            clock: clock)
+            clock: SystemClock())
     }
 
-    private func day(_ daysFromToday: Int) -> Date {
-        let calendar = clock.calendar
-        return calendar.date(byAdding: .day, value: daysFromToday, to: calendar.startOfDay(for: clock.now))!
+    static func date(inDays days: Int) -> Date {
+        let calendar = Calendar.current
+        return calendar.date(byAdding: .day, value: days, to: calendar.startOfDay(for: .now))!
     }
 }
 
@@ -62,9 +62,8 @@ extension WindowShift {
     static func preview(
         inDays days: Int, _ shiftType: ShiftType, alarmTimes: [String], isSkipped: Bool = false
     ) -> WindowShift {
-        let calendar = Calendar.current
-        return WindowShift(
-            date: calendar.date(byAdding: .day, value: days, to: calendar.startOfDay(for: .now))!,
+        WindowShift(
+            date: PreviewRoster.date(inDays: days),
             shiftTypeID: shiftType.id,
             name: shiftType.name,
             color: shiftType.color,

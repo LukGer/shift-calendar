@@ -113,9 +113,14 @@ private struct DayCell: View {
     }
 
     private var accessibilityLabel: String {
-        let date = day.date.formatted(.dateTime.weekday(.wide).day().month(.wide))
         let shifts = day.shifts.map { $0.isSkipped ? "\($0.shiftType.name), Skipped" : $0.shiftType.name }
-        return ([date] + (day.isToday ? ["Today"] : []) + shifts).joined(separator: ", ")
+        return ([day.title] + (day.isToday ? ["Today"] : []) + shifts).joined(separator: ", ")
+    }
+}
+
+extension GridDay {
+    var title: String {
+        date.formatted(.dateTime.weekday(.wide).day().month(.wide))
     }
 }
 
@@ -151,7 +156,7 @@ private struct Hatching: Shape {
 
 #Preview("Busy month") {
     MonthGrid(
-        month: .now, days: PreviewRoster(clock: SystemClock()).busyMonth, calendar: .current, showMonth: { _ in },
+        month: .now, days: PreviewRoster.busyMonth, calendar: .current, showMonth: { _ in },
         openDay: { _ in })
         .padding()
         .background(Color(.systemGroupedBackground))

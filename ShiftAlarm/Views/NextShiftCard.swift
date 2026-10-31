@@ -30,12 +30,7 @@ struct NextShiftCard: View {
                         .lineLimit(1)
                         .minimumScaleFactor(0.6)
                     Spacer()
-                    Button(
-                        shift.isSkipped ? "Ring for this Shift" : "Skip this Shift",
-                        systemImage: shift.isSkipped ? "bell" : "moon.zzz"
-                    ) {
-                        toggleSkip(shift)
-                    }
+                    SkipButton(isSkipped: shift.isSkipped) { toggleSkip(shift) }
                     .font(.footnote.bold())
                     .buttonStyle(.bordered)
                     .controlSize(.small)
