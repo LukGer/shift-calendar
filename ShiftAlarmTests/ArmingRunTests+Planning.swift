@@ -75,7 +75,47 @@ extension ArmingRunTests {
         #expect(calendarHolds == before)
     }
 
+    /// Events as (title, date, calendar), with Arbeit, Privat and Dienste chosen.
+    nonisolated static let rostersToTakeTagdienstOffOn0303: [([(String, String, String)], [String], [String])] = [
+        ([("td", "2031-03-03", "dienste")], [], []),
+        ([("td", "2031-03-03", "dienste"), (" TD ", "2031-03-03", "dienste")], [], []),
+        ([("td", "2031-03-03", "dienste"), ("td", "2031-03-03", "arbeit")], [], []),
+        (
+            [("td", "2031-03-03", "dienste"), ("hrn", "2031-03-03", "dienste")],
+            ["dienste 2031-03-03 hrn"], ["2031-03-03 06:15 Hausrunde"]
+        ),
+        (
+            [("td", "2031-03-03", "dienste"), ("td", "2031-03-04", "dienste")],
+            ["dienste 2031-03-04 td"], ["2031-03-04 05:00 Tagdienst"]
+        ),
+        (
+            [("td", "2031-03-03", "privat"), ("U", "2031-03-03", "privat"), ("frei", "2031-03-03", "dienste")],
+            ["dienste 2031-03-03 frei", "privat 2031-03-03 U"], []
+        ),
+    ]
+
+    @Test(arguments: rostersToTakeTagdienstOffOn0303)
+    func untickingDeletesEveryMatchingEventOnThatDateAndCancelsItsAlarms(
+        events: [(String, String, String)], expectedEvents: [String], expectedAlarms: [String]
+    ) async throws {
+        addHerShiftTypes()
+        try choose(.severalNoneMarked)
+        for (title, date, calendar) in events {
+            roster(allDay(title, on: date), in: calendar)
+        }
+        await arming.run()
+
+        try await takeOff("td", on: "2031-03-03")
+
+        #expect(calendarHolds == expectedEvents)
+        #expect(armedAlarms == expectedAlarms)
+    }
+
     // MARK: - Fixtures
+
+    func takeOff(_ shortcut: String, on date: String) async throws {
+        try await planning.toggleOff(try shiftType(shortcut), on: Self.instant("\(date) 00:00"))
+    }
 
     func choose(_ chosen: ChosenCalendars) throws {
         calendarStore.deviceCalendars = [
