@@ -25,7 +25,9 @@ struct Planning {
     /// Deletes every event behind the Shift Type's Shift on `date`, which also removes duplicates.
     func toggleOff(_ shiftType: ShiftType, on date: Date) async throws {
         let chosenCalendars = try context.fetch(FetchDescriptor<ChosenCalendar>())
-        for event in shift(of: shiftType, on: date, in: chosenCalendars)?.events ?? [] {
+        guard let shift = shift(of: shiftType, on: date, in: chosenCalendars) else { return }
+        guard !shift.isLocked else { throw PlanningRefusal.locked }
+        for event in shift.events {
             try calendarStore.deleteEvent(identifier: event.identifier)
         }
         await arming.run()
@@ -43,5 +45,5 @@ struct Planning {
 
 /// Why Planning left her calendar alone.
 enum PlanningRefusal: Error {
-    case noPlanningCalendar, pastDay, alreadyPlanned
+    case noPlanningCalendar, pastDay, alreadyPlanned, locked
 }

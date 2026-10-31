@@ -111,6 +111,20 @@ extension ArmingRunTests {
         #expect(armedAlarms == expectedAlarms)
     }
 
+    @Test(arguments: [
+        EventsBehindAShift.aPastEvent, .aMultiDayEvent, .aRecurringEvent, .anEventInACalendarSheCantEdit,
+        .aSingleDayEventAndARecurringOne, .aSingleDayEventAndOneInACalendarSheCantEdit,
+    ])
+    func untickingALockedShiftRefusesAndLeavesHerCalendarAlone(events: EventsBehindAShift) async throws {
+        addHerShiftTypes()
+        let date = try roster(events)
+        let before = calendarHolds
+
+        await #expect(throws: PlanningRefusal.locked) { try await takeOff("td", on: date) }
+
+        #expect(calendarHolds == before)
+    }
+
     // MARK: - Fixtures
 
     func takeOff(_ shortcut: String, on date: String) async throws {
