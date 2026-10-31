@@ -17,7 +17,7 @@ struct GridDay: Identifiable {
 struct GridShift {
     let shiftType: ShiftType
     let isSkipped: Bool
-    let isInArmingWindow: Bool
+    let hasAlarmArmed: Bool
     /// Past, or behind a multi-day or recurring event or one in a calendar she can't edit:
     /// Planning leaves it alone.
     let isLocked: Bool
@@ -48,10 +48,13 @@ extension CalendarStore {
                 isToday: date == armingWindow.lowerBound,
                 isPast: date < armingWindow.lowerBound,
                 shifts: (shiftsByDate[date] ?? []).map { shift, _, isLocked in
-                    GridShift(
+                    let isSkipped = shift.isSkipped(by: skips)
+                    return GridShift(
                         shiftType: shift.shiftType,
-                        isSkipped: shift.isSkipped(by: skips),
-                        isInArmingWindow: armingWindow.contains(shift.date),
+                        isSkipped: isSkipped,
+                        hasAlarmArmed: !isSkipped && !shift.alarmInstants(
+                            after: clock.now, through: armingWindow.upperBound, calendar: calendar
+                        ).isEmpty,
                         isLocked: isLocked
                     )
                 }

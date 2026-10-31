@@ -87,7 +87,7 @@ private struct DayCell: View {
         .frame(maxWidth: .infinity, minHeight: 62)
         .clipShape(.rect(cornerRadius: 8))
         .overlay(alignment: .topTrailing) {
-            if day.hasAnAlarmArmed {
+            if day.shifts.contains(where: \.hasAlarmArmed) {
                 Image(systemName: "bell.fill")
                     .font(.system(size: 8))
                     .foregroundStyle(.secondary)
@@ -116,13 +116,6 @@ private struct DayCell: View {
         let date = day.date.formatted(.dateTime.weekday(.wide).day().month(.wide))
         let shifts = day.shifts.map { $0.isSkipped ? "\($0.shiftType.name), Skipped" : $0.shiftType.name }
         return ([date] + (day.isToday ? ["Today"] : []) + shifts).joined(separator: ", ")
-    }
-}
-
-private extension GridDay {
-    /// The bell means an alarm is armed, so a Shift that is Skipped or rings nothing doesn't earn one.
-    var hasAnAlarmArmed: Bool {
-        shifts.contains { $0.isInArmingWindow && !$0.isSkipped && !$0.shiftType.alarmSet.isEmpty }
     }
 }
 

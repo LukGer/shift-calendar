@@ -15,9 +15,7 @@ struct ArmingPlan {
             let shiftType = shift.shiftType
             let isSkipped = shift.isSkipped(by: skips)
             var alarmTimes: [AlarmTime] = []
-            for time in shiftType.alarmSet {
-                let instant = time.instant(on: shift.date, calendar: calendar)
-                guard now < instant, instant <= windowEnd else { continue }
+            for (time, instant) in shift.alarmInstants(after: now, through: windowEnd, calendar: calendar) {
                 alarmTimes.append(time)
                 if !isSkipped, wantedInstants.insert(instant).inserted {
                     wantedAlarms.append(WantedAlarm(
@@ -43,5 +41,13 @@ struct ArmingPlan {
         let day = calendar.dateComponents([.year, .month, .day], from: shift.date)
         let date = String(format: "%04d-%02d-%02d", day.year!, day.month!, day.day!)
         return UUID(name: "\(date)|\(shift.shiftType.id.uuidString)|\(time.text)", namespace: alarmIDNamespace)
+    }
+}
+
+extension Shift {
+    func alarmInstants(after now: Date, through windowEnd: Date, calendar: Calendar) -> [(time: AlarmTime, instant: Date)] {
+        shiftType.alarmSet
+            .map { ($0, $0.instant(on: date, calendar: calendar)) }
+            .filter { now < $0.instant && $0.instant <= windowEnd }
     }
 }

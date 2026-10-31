@@ -155,7 +155,7 @@ private extension PreviewRoster {
     }
 
     static func shift(_ shiftType: ShiftType, isSkipped: Bool = false, isLocked: Bool = false) -> GridShift {
-        GridShift(shiftType: shiftType, isSkipped: isSkipped, isInArmingWindow: true, isLocked: isLocked)
+        GridShift(shiftType: shiftType, isSkipped: isSkipped, hasAlarmArmed: !isSkipped, isLocked: isLocked)
     }
 }
 
