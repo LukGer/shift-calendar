@@ -35,9 +35,9 @@ struct Planning {
 
     private func shift(
         of shiftType: ShiftType, on date: Date, in chosenCalendars: [ChosenCalendar]
-    ) -> (shift: Shift, events: [CalendarEvent], isLocked: Bool)? {
+    ) -> ShiftInCalendar? {
         let nextDay = clock.calendar.date(byAdding: .day, value: 1, to: date)!
-        return calendarStore.shiftsWithEvents(
+        return calendarStore.shiftsInCalendar(
             in: chosenCalendars, of: [shiftType], from: date, to: nextDay, clock: clock
         ).first { $0.shift.date == date }
     }
