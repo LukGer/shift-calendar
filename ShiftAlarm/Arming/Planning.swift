@@ -10,7 +10,7 @@ struct Planning {
     let arming: Arming
 
     /// Writes one all-day event titled with the Shift Type's Shortcut on `date` into the Planning Calendar.
-    func toggleOn(_ shiftType: ShiftType, on date: Date) async throws {
+    func plan(_ shiftType: ShiftType, on date: Date) async throws {
         let chosenCalendars = try context.fetch(FetchDescriptor<ChosenCalendar>())
         guard let planningCalendar = chosenCalendars.planningCalendar(among: calendarStore.calendars()) else {
             throw PlanningRefusal.noPlanningCalendar
@@ -23,7 +23,7 @@ struct Planning {
     }
 
     /// Deletes every event behind the Shift Type's Shift on `date`, which also removes duplicates.
-    func toggleOff(_ shiftType: ShiftType, on date: Date) async throws {
+    func takeOff(_ shiftType: ShiftType, on date: Date) async throws {
         let chosenCalendars = try context.fetch(FetchDescriptor<ChosenCalendar>())
         guard let shift = shift(of: shiftType, on: date, in: chosenCalendars) else { return }
         guard !shift.isLocked else { throw PlanningRefusal.locked }

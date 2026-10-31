@@ -39,7 +39,10 @@ struct HomeView: View {
                     if let day = days.first(where: { $0.date == openDate }) {
                         DaySheet(
                             day: day, shiftTypes: shiftTypes, hasPlanningCalendar: hasPlanningCalendar,
-                            toggle: { try await toggle($0, on: day.date, isOn: $1) },
+                            plan: { shiftType in try await readMonth { try await planning.plan(shiftType, on: day.date) } },
+                            takeOff: { shiftType in
+                                try await readMonth { try await planning.takeOff(shiftType, on: day.date) }
+                            },
                             toggleSkip: { toggleSkip(on: day.date, of: $0.shiftType.id) },
                             openSettings: {
                                 opensSettingsAfterDaySheet = true
@@ -82,14 +85,13 @@ struct HomeView: View {
         armThenReadMonth()
     }
 
-    private func toggle(_ shiftType: ShiftType, on date: Date, isOn: Bool) async throws {
-        let planning = Planning(context: context, calendarStore: calendarStore, clock: clock, arming: arming)
+    private var planning: Planning {
+        Planning(context: context, calendarStore: calendarStore, clock: clock, arming: arming)
+    }
+
+    private func readMonth(after change: () async throws -> Void) async throws {
         defer { readMonth() }
-        if isOn {
-            try await planning.toggleOn(shiftType, on: date)
-        } else {
-            try await planning.toggleOff(shiftType, on: date)
-        }
+        try await change()
     }
 
     private func showMonth(_ offset: Int) {

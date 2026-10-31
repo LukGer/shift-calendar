@@ -1,13 +1,13 @@
 import SwiftUI
 
-/// A day of the month grid: her Shift Types to tick, then Skip and Edit Shift Type for each Shift on it.
+/// A day of the month grid: her Shift Types to plan or take off, then Skip and Edit Shift Type for each Shift on it.
 /// Past days leave only Edit Shift Type; without a Planning Calendar her Shift Types are read-only.
 struct DaySheet: View {
     let day: GridDay
     let shiftTypes: [ShiftType]
     let hasPlanningCalendar: Bool
-    /// Ticks the Shift Type on the day when true, unticks it when false.
-    let toggle: (ShiftType, Bool) async throws -> Void
+    let plan: (ShiftType) async throws -> Void
+    let takeOff: (ShiftType) async throws -> Void
     let toggleSkip: (GridShift) -> Void
     let openSettings: () -> Void
 
@@ -45,7 +45,7 @@ struct DaySheet: View {
         Section {
             ForEach(shiftTypes) { shiftType in
                 let shift = day.shifts.first { $0.shiftType.id == shiftType.id }
-                Toggle(isOn: isTicked(shiftType, shift: shift)) {
+                Toggle(isOn: isPlanned(shiftType, shift: shift)) {
                     HStack(spacing: 12) {
                         Circle()
                             .fill(shiftType.color.gradient)
@@ -97,14 +97,14 @@ struct DaySheet: View {
         }
     }
 
-    private func isTicked(_ shiftType: ShiftType, shift: GridShift?) -> Binding<Bool> {
+    private func isPlanned(_ shiftType: ShiftType, shift: GridShift?) -> Binding<Bool> {
         Binding {
             shift != nil
         } set: { isOn in
             Task {
                 do {
                     refusal = nil
-                    try await toggle(shiftType, isOn)
+                    try await (isOn ? plan : takeOff)(shiftType)
                 } catch {
                     refusal = (error as? PlanningRefusal)?.explanation ?? "Couldn't change your calendar."
                 }
@@ -163,7 +163,7 @@ private extension DaySheet {
     init(day: GridDay, shiftTypes: [ShiftType] = PreviewRoster.shiftTypes, hasPlanningCalendar: Bool = true) {
         self.init(
             day: day, shiftTypes: shiftTypes, hasPlanningCalendar: hasPlanningCalendar,
-            toggle: { _, _ in }, toggleSkip: { _ in }, openSettings: {})
+            plan: { _ in }, takeOff: { _ in }, toggleSkip: { _ in }, openSettings: {})
     }
 }
 

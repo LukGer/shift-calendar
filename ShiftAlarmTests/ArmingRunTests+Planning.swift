@@ -13,7 +13,7 @@ extension ArmingRunTests {
         ("hrn", "2031-03-20", []),
         ("e6", "2031-03-03", []),
     ])
-    func tickingAShiftTypeWritesItsShortcutIntoThePlanningCalendarAndArmsIt(
+    func planningAShiftTypeWritesItsShortcutIntoThePlanningCalendarAndArmsIt(
         shortcut: String, date: String, expectedAlarms: [String]
     ) async throws {
         addHerShiftTypes()
@@ -60,7 +60,7 @@ extension ArmingRunTests {
         (.oneEditable, "2031-03-03", [(" TD ", "2031-03-03", "2031-03-03")], .alreadyPlanned),
         (.oneEditable, "2031-03-03", [("td", "2031-03-02", "2031-03-04")], .alreadyPlanned),
     ])
-    func tickingRefusesWithoutAPlanningCalendarOnAPastDayOrWhenTheShiftIsAlreadyThere(
+    func planningRefusesWithoutAPlanningCalendarOnAPastDayOrWhenTheShiftIsAlreadyThere(
         chosen: ChosenCalendars, date: String, alreadyThere: [(String, String, String)], refusal: PlanningRefusal
     ) async throws {
         addHerShiftTypes()
@@ -95,7 +95,7 @@ extension ArmingRunTests {
     ]
 
     @Test(arguments: rostersToTakeTagdienstOffOn0303)
-    func untickingDeletesEveryMatchingEventOnThatDateAndCancelsItsAlarms(
+    func takingAShiftOffDeletesEveryMatchingEventOnThatDateAndCancelsItsAlarms(
         events: [(String, String, String)], expectedEvents: [String], expectedAlarms: [String]
     ) async throws {
         addHerShiftTypes()
@@ -115,7 +115,7 @@ extension ArmingRunTests {
         EventsBehindAShift.aPastEvent, .aMultiDayEvent, .aRecurringEvent, .anEventInACalendarSheCantEdit,
         .aSingleDayEventAndARecurringOne, .aSingleDayEventAndOneInACalendarSheCantEdit,
     ])
-    func untickingALockedShiftRefusesAndLeavesHerCalendarAlone(events: EventsBehindAShift) async throws {
+    func takingALockedShiftOffRefusesAndLeavesHerCalendarAlone(events: EventsBehindAShift) async throws {
         addHerShiftTypes()
         let date = try roster(events)
         let before = calendarHolds
@@ -125,7 +125,7 @@ extension ArmingRunTests {
         #expect(calendarHolds == before)
     }
 
-    /// Toggles on 2031-03-03 over a Tagdienst there: "+nd" ticks Nachtdienst, "-td" unticks Tagdienst.
+    /// Changes on 2031-03-03 over a Tagdienst there: "+nd" plans Nachtdienst, "-td" takes Tagdienst off.
     @Test(arguments: [
         (["-td", "+nd"], ["dienste 2031-03-03 nd"], ["2031-03-03 18:30 Nachtdienst"]),
         (["+hrn"], ["dienste 2031-03-03 hrn", "dienste 2031-03-03 td"],
@@ -134,15 +134,15 @@ extension ArmingRunTests {
         (["-td"], [], []),
     ])
     func changingADaysShiftOrPlanningASecondOneArmsWhatIsThereAfterwards(
-        toggles: [String], expectedEvents: [String], expectedAlarms: [String]
+        changes: [String], expectedEvents: [String], expectedAlarms: [String]
     ) async throws {
         addHerShiftTypes()
         roster(allDay("td", on: "2031-03-03"))
         await arming.run()
 
-        for toggle in toggles {
-            let shortcut = String(toggle.dropFirst())
-            if toggle.hasPrefix("+") {
+        for change in changes {
+            let shortcut = String(change.dropFirst())
+            if change.hasPrefix("+") {
                 try await plan(shortcut, on: "2031-03-03")
             } else {
                 try await takeOff(shortcut, on: "2031-03-03")
@@ -189,7 +189,7 @@ extension ArmingRunTests {
     }
 
     func takeOff(_ shortcut: String, on date: String) async throws {
-        try await planning.toggleOff(try shiftType(shortcut), on: Self.instant("\(date) 00:00"))
+        try await planning.takeOff(try shiftType(shortcut), on: Self.instant("\(date) 00:00"))
     }
 
     func choose(_ chosen: ChosenCalendars) throws {
@@ -247,7 +247,7 @@ extension ArmingRunTests {
     }
 
     func plan(_ shortcut: String, on date: String) async throws {
-        try await planning.toggleOn(try shiftType(shortcut), on: Self.instant("\(date) 00:00"))
+        try await planning.plan(try shiftType(shortcut), on: Self.instant("\(date) 00:00"))
     }
 
     func shiftType(_ shortcut: String) throws -> ShiftType {
