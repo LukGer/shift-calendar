@@ -23,7 +23,84 @@ extension ArmingRunTests {
         #expect(armedAlarms == expectedAlarms)
     }
 
+    /// Her calendars in Settings order: Dienste, Privat and Arbeit she can edit, Feiertage she can't.
+    enum ChosenCalendars: CaseIterable {
+        case oneEditable, oneEditableAndOneSheCantEdit, severalNoneMarked, severalWithOneMarked
+        case severalWithTheMarkedOneGone, severalWithTheMarkedOneNowReadOnly, severalWithTheMarkedOneFoundAgain
+        case onlyOneSheCantEdit, none
+    }
+
+    @Test(arguments: [
+        (ChosenCalendars.oneEditable, "dienste"),
+        (.oneEditableAndOneSheCantEdit, "dienste"),
+        (.severalNoneMarked, "dienste"),
+        (.severalWithOneMarked, "arbeit"),
+        (.severalWithTheMarkedOneGone, "dienste"),
+        (.severalWithTheMarkedOneNowReadOnly, "dienste"),
+        (.severalWithTheMarkedOneFoundAgain, "arbeit-2"),
+    ])
+    func newShiftsGoIntoTheMarkedEditableChosenCalendarOrElseTheFirstEditableOne(
+        chosen: ChosenCalendars, expected: String
+    ) async throws {
+        addHerShiftTypes()
+        try choose(chosen)
+
+        try await plan("td", on: "2031-03-03")
+
+        #expect(calendarHolds == ["\(expected) 2031-03-03 td"])
+    }
+
     // MARK: - Fixtures
+
+    func choose(_ chosen: ChosenCalendars) throws {
+        calendarStore.deviceCalendars = [
+            DeviceCalendar(identifier: "dienste", title: "Dienste", sourceIdentifier: "icloud", isEditable: true),
+            DeviceCalendar(identifier: "privat", title: "Privat", sourceIdentifier: "icloud", isEditable: true),
+            DeviceCalendar(identifier: "arbeit", title: "Arbeit", sourceIdentifier: "google", isEditable: true),
+            DeviceCalendar(identifier: "feiertage", title: "Feiertage", sourceIdentifier: "icloud", isEditable: false),
+        ]
+        switch chosen {
+        case .oneEditable:
+            try choose(["dienste"])
+        case .oneEditableAndOneSheCantEdit:
+            try choose(["feiertage", "dienste"])
+        case .severalNoneMarked:
+            try choose(["arbeit", "privat", "dienste"])
+        case .severalWithOneMarked:
+            try choose(["dienste", "privat", "arbeit"], marking: "arbeit")
+        case .severalWithTheMarkedOneGone:
+            try choose(["dienste", "privat", "arbeit"], marking: "arbeit")
+            calendarStore.deviceCalendars.remove(at: 2)
+        case .severalWithTheMarkedOneNowReadOnly:
+            try choose(["dienste", "privat", "arbeit"], marking: "arbeit")
+            calendarStore.deviceCalendars[2] = DeviceCalendar(
+                identifier: "arbeit", title: "Arbeit", sourceIdentifier: "google", isEditable: false)
+        case .severalWithTheMarkedOneFoundAgain:
+            try choose(["dienste", "privat", "arbeit"], marking: "arbeit")
+            calendarStore.deviceCalendars[2] = DeviceCalendar(
+                identifier: "arbeit-2", title: "Arbeit", sourceIdentifier: "google", isEditable: true)
+        case .onlyOneSheCantEdit:
+            try choose(["feiertage"])
+        case .none:
+            try choose([])
+        }
+    }
+
+    /// Chooses these of the device's calendars in place of Dienste, the way Settings does.
+    func choose(_ identifiers: [String], marking marked: String? = nil) throws {
+        let context = container.mainContext
+        try context.fetch(FetchDescriptor<ChosenCalendar>()).forEach(context.delete)
+        for identifier in identifiers {
+            let calendar = try #require(calendarStore.deviceCalendars.first { $0.identifier == identifier })
+            context.insert(ChosenCalendar(
+                identifier: calendar.identifier, title: calendar.title, sourceIdentifier: calendar.sourceIdentifier))
+        }
+        let chosenCalendars = try context.fetch(FetchDescriptor<ChosenCalendar>())
+        if let marked {
+            chosenCalendars.markAsPlanningCalendar(try #require(chosenCalendars.first { $0.identifier == marked }))
+        }
+        try context.save()
+    }
 
     var planning: Planning {
         Planning(context: container.mainContext, calendarStore: calendarStore, clock: clock, arming: arming)
