@@ -49,7 +49,7 @@ extension ArmingRunTests {
         try toggleSkip("2031-03-03", "Tagdienst", in: await arming.run())
         await arming.run()
 
-        calendarReader.eventsByCalendar["dienste"] = []
+        calendarStore.eventsByCalendar["dienste"] = []
         await arming.run()
         roster(allDay(reAddedTitle, on: "2031-03-03"))
         let result = await arming.run()
@@ -70,7 +70,7 @@ extension ArmingRunTests {
         try toggleSkip("2031-03-03", "Tagdienst", in: await arming.run())
         await arming.run()
 
-        calendarReader.eventsByCalendar["dienste"] = [allDay(newTitle, on: "2031-03-03")]
+        calendarStore.eventsByCalendar["dienste"] = [allDay(newTitle, on: "2031-03-03")]
         let result = await arming.run()
 
         #expect(armedAlarms == expectedAlarms)
@@ -84,9 +84,9 @@ extension ArmingRunTests {
         try toggleSkip("2031-03-03", "Nachtdienst", in: await arming.run())
         await arming.run()
 
-        calendarReader.eventsByCalendar["dienste"] = [allDay(otherTitle, on: "2031-03-03")]
+        calendarStore.eventsByCalendar["dienste"] = [allDay(otherTitle, on: "2031-03-03")]
         await arming.run()
-        calendarReader.eventsByCalendar["dienste"] = [allDay("nd", on: "2031-03-03")]
+        calendarStore.eventsByCalendar["dienste"] = [allDay("nd", on: "2031-03-03")]
         let result = await arming.run()
 
         #expect(armedAlarms == ["2031-03-03 18:30 Nachtdienst"])
@@ -111,10 +111,31 @@ extension ArmingRunTests {
         #expect(try context.fetchCount(FetchDescriptor<Skip>()) == (isKept ? 1 : 0))
     }
 
+    /// Inside the Arming Window, beyond it, and in another month.
+    @Test(arguments: ["2031-03-03", "2031-03-20", "2031-04-02"])
+    func skippingAndUnSkippingFromTheDaySheetWorksForAnyFutureShift(date: String) async throws {
+        addHerShiftTypes()
+        roster(allDay("td", on: date))
+        let month = String(date.prefix(7))
+
+        try toggleSkip("td", on: date)
+        let skipped = try shifts(in: month, where: \.isSkipped)
+        try toggleSkip("td", on: date)
+
+        #expect(skipped == ["\(date) td"])
+        #expect(try shifts(in: month, where: \.isSkipped) == [])
+    }
+
     // MARK: - Fixtures
 
+    func toggleSkip(_ shortcut: String, on date: String) throws {
+        try container.mainContext.toggleSkip(
+            of: Shift(date: Self.instant("\(date) 00:00"), shiftType: try shiftType(shortcut)))
+    }
+
     func toggleSkip(_ date: String, _ name: String, in result: ArmingResult) throws {
-        try container.mainContext.toggleSkip(of: try #require(Self.windowShift(on: date, name, in: result)))
+        let shift = try #require(Self.windowShift(on: date, name, in: result))
+        try container.mainContext.toggleSkip(of: shift)
     }
 
     static func windowShift(on date: String, _ name: String, in result: ArmingResult) -> WindowShift? {

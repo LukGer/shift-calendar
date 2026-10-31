@@ -8,14 +8,23 @@ struct Shift: Hashable {
     /// The Shifts in all-day events whose whole title, trimmed and in any case, is a Shortcut:
     /// one per date an event covers, in date order and then in the order the Shift Types were created.
     static func recognise(in events: [CalendarEvent], of shiftTypes: [ShiftType], calendar: Calendar) -> [Shift] {
-        var shifts: Set<Shift> = []
+        recogniseWithEvents(in: events, of: shiftTypes, calendar: calendar).map(\.shift)
+    }
+
+    /// The Shifts `recognise` finds, each with every event it is recognised in.
+    static func recogniseWithEvents(
+        in events: [CalendarEvent], of shiftTypes: [ShiftType], calendar: Calendar
+    ) -> [(shift: Shift, events: [CalendarEvent])] {
+        var eventsByShift: [Shift: [CalendarEvent]] = [:]
         for (event, shiftType) in match(events, to: shiftTypes) {
             guard let shiftType else { continue }
-            for date in dates(coveredBy: event, calendar: calendar) {
-                shifts.insert(Shift(date: date, shiftType: shiftType))
+            for date in event.dates(in: calendar) {
+                eventsByShift[Shift(date: date, shiftType: shiftType), default: []].append(event)
             }
         }
-        return shifts.sorted { ($0.date, $0.shiftType.createdAt) < ($1.date, $1.shiftType.createdAt) }
+        return eventsByShift
+            .sorted { ($0.key.date, $0.key.shiftType.createdAt) < ($1.key.date, $1.key.shiftType.createdAt) }
+            .map { ($0.key, $0.value) }
     }
 
     /// The titles of all-day events that are no Shift Type's Shortcut, trimmed, each once whatever its case,
@@ -40,12 +49,15 @@ struct Shift: Hashable {
         )
         return events.filter(\.isAllDay).map { ($0, shiftTypesByShortcut[$0.title.trimmedAndLowercased]) }
     }
+}
 
-    /// Works whether the event ends at 23:59:59 on its last day (EventKit) or at the next midnight (ICS).
-    private static func dates(coveredBy event: CalendarEvent, calendar: Calendar) -> [Date] {
+extension CalendarEvent {
+    /// The dates the event covers. Works whether it ends at 23:59:59 on its last day (EventKit)
+    /// or at the next midnight (ICS).
+    func dates(in calendar: Calendar) -> [Date] {
         var dates: [Date] = []
-        var date = calendar.startOfDay(for: event.startDate)
-        while date < event.endDate {
+        var date = calendar.startOfDay(for: startDate)
+        while date < endDate {
             dates.append(date)
             date = calendar.date(byAdding: .day, value: 1, to: date)!
         }

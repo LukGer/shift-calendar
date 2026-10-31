@@ -6,7 +6,7 @@ import SwiftData
 @Observable
 final class Arming {
     @ObservationIgnored private let openStore: @MainActor () throws -> ModelContainer
-    @ObservationIgnored private let calendarReader: CalendarReader
+    @ObservationIgnored private let calendarStore: CalendarStore
     @ObservationIgnored private let alarmScheduler: AlarmScheduler
     @ObservationIgnored private let notifier: Notifier
     @ObservationIgnored private let clock: WallClock
@@ -14,14 +14,14 @@ final class Arming {
 
     init(
         openStore: @escaping @MainActor () throws -> ModelContainer,
-        calendarReader: CalendarReader,
+        calendarStore: CalendarStore,
         alarmScheduler: AlarmScheduler,
         notifier: Notifier,
         clock: WallClock,
         afterEachRun: @escaping @MainActor () -> Void = {}
     ) {
         self.openStore = openStore
-        self.calendarReader = calendarReader
+        self.calendarStore = calendarStore
         self.alarmScheduler = alarmScheduler
         self.notifier = notifier
         self.clock = clock
@@ -62,7 +62,10 @@ final class Arming {
         return result
     }
 
-    private static let armingWindow = DateComponents(day: 7)
+    static func armingWindow(at now: Date, calendar: Calendar) -> ClosedRange<Date> {
+        calendar.startOfDay(for: now)...calendar.date(byAdding: .day, value: 7, to: now)!
+    }
+
     private static let staleArmingDelay: TimeInterval = 48 * 60 * 60
 
     private func arm(in context: ModelContext, now: Date) async throws -> ArmingResult {
@@ -70,25 +73,25 @@ final class Arming {
         try pruneSkips(before: calendar.startOfDay(for: now), in: context)
         let chosenCalendars = try context.fetch(FetchDescriptor<ChosenCalendar>())
         if let reason = reasonToChangeNoAlarm(chosenCalendars: chosenCalendars) { return .skipped(reason) }
-        let windowEnd = calendar.date(byAdding: Self.armingWindow, to: now)!
-        let events = calendarReader.events(
+        let window = Self.armingWindow(at: now, calendar: calendar)
+        let events = calendarStore.events(
             inCalendars: chosenCalendars.map(\.identifier),
-            from: calendar.startOfDay(for: now),
-            to: windowEnd
+            from: window.lowerBound,
+            to: window.upperBound
         )
         let shifts = Shift.recognise(
             in: events, of: try context.fetch(FetchDescriptor<ShiftType>()), calendar: calendar)
         let plan = ArmingPlan(
             shifts: shifts, skips: try dropSkipsWhoseShiftTypeChanged(on: shifts, in: context),
-            now: now, windowEnd: windowEnd, calendar: calendar)
+            now: now, windowEnd: window.upperBound, calendar: calendar)
         try await armExactly(plan.wantedAlarms)
         await notifier.replaceStaleArmingNotification(firingAt: now.addingTimeInterval(Self.staleArmingDelay))
         return .armed(plan.shiftsInWindow)
     }
 
     private func reasonToChangeNoAlarm(chosenCalendars: [ChosenCalendar]) -> SkipReason? {
-        let deviceCalendars = calendarReader.calendars()
-        guard calendarReader.hasFullAccess, !deviceCalendars.isEmpty else { return .calendarNotReadable }
+        let deviceCalendars = calendarStore.calendars()
+        guard calendarStore.hasFullAccess, !deviceCalendars.isEmpty else { return .calendarNotReadable }
         guard chosenCalendars.allSatisfy({ $0.isFound(among: deviceCalendars) }) else { return .chosenCalendarMissing }
         guard alarmScheduler.isAuthorized else { return .alarmsNotAllowed }
         return nil

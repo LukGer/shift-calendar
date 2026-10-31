@@ -12,12 +12,14 @@ struct ShiftTypeEditor: View {
     @State private var name: String
     @State private var shortcut: String
     @State private var alarms: [EditableAlarm]
+    @State private var pickedColorIndex: Int?
 
     init(shiftType: ShiftType?, newShortcut: String = "") {
         self.shiftType = shiftType
         _name = State(initialValue: shiftType?.name ?? "")
         _shortcut = State(initialValue: shiftType?.shortcut ?? newShortcut)
         _alarms = State(initialValue: (shiftType?.alarmSet ?? []).map { EditableAlarm($0) })
+        _pickedColorIndex = State(initialValue: shiftType?.colorIndex)
     }
 
     var body: some View {
@@ -33,6 +35,10 @@ struct ShiftTypeEditor: View {
                 }
             } footer: {
                 shortcutFooter
+            }
+
+            Section("Colour") {
+                ColorSwatches(selection: colorIndex)
             }
 
             Section {
@@ -73,6 +79,11 @@ struct ShiftTypeEditor: View {
         }
     }
 
+    /// A new Shift Type shows the palette's next colour until she picks one.
+    private var colorIndex: Binding<Int> {
+        Binding { pickedColorIndex ?? shiftTypes.nextColorIndex } set: { pickedColorIndex = $0 }
+    }
+
     private var isShortcutTaken: Bool {
         shiftTypes.contains {
             $0.id != shiftType?.id && $0.shortcut.trimmedAndLowercased == shortcut.trimmedAndLowercased
@@ -85,8 +96,10 @@ struct ShiftTypeEditor: View {
             shiftType.name = name.trimmed
             shiftType.shortcut = shortcut
             shiftType.replaceAlarmSet(with: alarmSet)
+            shiftType.colorIndex = colorIndex.wrappedValue
         } else {
-            _ = try? context.addShiftType(name: name.trimmed, shortcut: shortcut, alarmSet: alarmSet)
+            _ = try? context.addShiftType(
+                name: name.trimmed, shortcut: shortcut, alarmSet: alarmSet, colorIndex: pickedColorIndex)
         }
         saveAndArm()
     }
@@ -103,6 +116,38 @@ struct ShiftTypeEditor: View {
     }
 }
 
+/// The palette as a row of swatches, with the selected colour checked.
+private struct ColorSwatches: View {
+    @Binding var selection: Int
+
+    var body: some View {
+        HStack {
+            ForEach(ShiftType.palette.indices, id: \.self) { index in
+                let isSelected = index == selection % ShiftType.palette.count
+                Button {
+                    selection = index
+                } label: {
+                    Circle()
+                        .fill(ShiftType.palette[index].gradient)
+                        .frame(width: 30, height: 30)
+                        .overlay {
+                            if isSelected {
+                                Image(systemName: "checkmark")
+                                    .font(.footnote.bold())
+                                    .foregroundStyle(.white)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(ShiftType.palette[index].description.capitalized)
+                .accessibilityAddTraits(isSelected ? .isSelected : [])
+            }
+        }
+        .padding(.vertical, 4)
+    }
+}
+
 /// One row of the Alarm Set while it's being edited. Its own identity keeps the row steady while its time changes.
 private struct EditableAlarm: Identifiable {
     let id = UUID()
@@ -111,4 +156,25 @@ private struct EditableAlarm: Identifiable {
     init(_ alarmTime: AlarmTime) {
         time = alarmTime.instant(on: .now, calendar: .current)
     }
+}
+
+#Preview("Picked colour") {
+    let container = try! ModelContainer(for: ShiftType.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+    let nachtdienst = try! container.mainContext.addShiftType(
+        name: "Nachtdienst", shortcut: "nd", alarmSet: [AlarmTime(hour: 18, minute: 30)], colorIndex: 5)
+    NavigationStack {
+        ShiftTypeEditor(shiftType: nachtdienst)
+    }
+    .modelContainer(container)
+    .environment(Arming.shared)
+}
+
+#Preview("New Shift Type gets the next colour") {
+    let container = try! ModelContainer(for: ShiftType.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+    let _ = try! container.mainContext.addShiftType(name: "Tagdienst", shortcut: "td")
+    NavigationStack {
+        ShiftTypeEditor(shiftType: nil, newShortcut: "nd")
+    }
+    .modelContainer(container)
+    .environment(Arming.shared)
 }

@@ -13,7 +13,7 @@ struct Walkthrough: View {
     @State private var deviceCalendars: [DeviceCalendar] = []
     @State private var foundShortcuts: [String] = []
     @State private var names: [String: String] = [:]
-    private let calendarReader = EventKitReader()
+    private let calendarStore = EventKitCalendarStore()
 
     var body: some View {
         TabView(selection: $page) {
@@ -29,9 +29,9 @@ struct Walkthrough: View {
             WalkthroughPage(
                 symbol: "calendar",
                 title: "Read your calendar",
-                text: "Shifts are all-day events titled with a Shortcut like “td” or “nd”. Nothing is ever written to your calendar.",
+                text: "Shifts are all-day events titled with a Shortcut like “td” or “nd”. Shift Alarm only writes to your calendar when you plan a Shift.",
                 button: "Allow Calendar Access",
-                action: { ask(calendarReader.requestAccess) }
+                action: { ask(calendarStore.requestAccess) }
             )
             .tag(Page.calendarAccess)
 
@@ -90,8 +90,8 @@ struct Walkthrough: View {
         .tabViewStyle(.page(indexDisplayMode: .always))
         .indexViewStyle(.page(backgroundDisplayMode: .always))
         .task(id: page) {
-            deviceCalendars = calendarReader.calendars()
-            foundShortcuts = calendarReader.unmatchedTitles(
+            deviceCalendars = calendarStore.calendars()
+            foundShortcuts = calendarStore.unmatchedTitles(
                 in: chosenCalendars, of: shiftTypes, now: .now, calendar: .current)
         }
     }

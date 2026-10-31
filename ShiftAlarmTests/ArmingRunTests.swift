@@ -14,7 +14,7 @@ struct ArmingRunTests {
     }()
 
     let container: ModelContainer
-    let calendarReader = FakeCalendarReader()
+    let calendarStore = FakeCalendarStore()
     let alarms = FakeAlarmScheduler()
     let notifier = FakeNotifier()
     let clock = FixedClock(now: ArmingRunTests.instant("2031-03-02 20:00"), calendar: ArmingRunTests.vienna)
@@ -28,7 +28,7 @@ struct ArmingRunTests {
         self.container = container
         arming = Arming(
             openStore: { container },
-            calendarReader: calendarReader,
+            calendarStore: calendarStore,
             alarmScheduler: alarms,
             notifier: notifier,
             clock: clock
@@ -310,7 +310,7 @@ struct ArmingRunTests {
         await arming.run()
         let armedBefore = armedAlarms
         let callsBefore = alarms.calls
-        calendarReader.eventsByCalendar["dienste"] = [allDay("nd", on: "2031-03-04")]
+        calendarStore.eventsByCalendar["dienste"] = [allDay("nd", on: "2031-03-04")]
         clock.now = Self.instant("2031-03-02 21:00")
 
         make(blindness)
@@ -329,12 +329,12 @@ struct ArmingRunTests {
         await arming.run()
         let armedBefore = armedAlarms
         let callsBefore = alarms.calls
-        calendarReader.hasFullAccess = false
-        calendarReader.deviceCalendars = []
+        calendarStore.hasFullAccess = false
+        calendarStore.deviceCalendars = []
         struct StoreLocked: Error {}
         let armingBeforeFirstUnlock = Arming(
             openStore: { throw StoreLocked() },
-            calendarReader: calendarReader,
+            calendarStore: calendarStore,
             alarmScheduler: alarms,
             notifier: notifier,
             clock: clock
@@ -348,9 +348,9 @@ struct ArmingRunTests {
 
     @Test func findsAChosenCalendarAgainByTitleAndAccountWhenItsIdentifierChanges() async throws {
         addHerShiftTypes()
-        calendarReader.deviceCalendars = [
-            DeviceCalendar(identifier: "dienste-2", title: "Dienste", sourceIdentifier: "icloud"),
-            DeviceCalendar(identifier: "dienste-google", title: "Dienste", sourceIdentifier: "google"),
+        calendarStore.deviceCalendars = [
+            DeviceCalendar(identifier: "dienste-2", title: "Dienste", sourceIdentifier: "icloud", isEditable: true),
+            DeviceCalendar(identifier: "dienste-google", title: "Dienste", sourceIdentifier: "google", isEditable: true),
         ]
         roster(allDay("td", on: "2031-03-03"), in: "dienste-2")
 
@@ -386,14 +386,14 @@ struct ArmingRunTests {
         let context = container.mainContext
         switch change {
         case .shiftMovedToAnotherDate:
-            calendarReader.eventsByCalendar["dienste"] = [allDay("td", on: "2031-03-04")]
+            calendarStore.eventsByCalendar["dienste"] = [allDay("td", on: "2031-03-04")]
         case .shiftTypeChanged:
-            calendarReader.eventsByCalendar["dienste"] = [allDay("hrn", on: "2031-03-03")]
+            calendarStore.eventsByCalendar["dienste"] = [allDay("hrn", on: "2031-03-03")]
         case .alarmTimeChanged:
             let tagdienst = try context.fetch(FetchDescriptor<ShiftType>()).first { $0.shortcut == "td" }
             tagdienst?.replaceAlarmSet(with: [AlarmTime(hour: 4, minute: 45)])
         case .shiftDeleted:
-            calendarReader.eventsByCalendar["dienste"] = []
+            calendarStore.eventsByCalendar["dienste"] = []
         case .calendarUnchosen:
             try context.fetch(FetchDescriptor<ChosenCalendar>()).forEach(context.delete)
         }
@@ -407,17 +407,17 @@ struct ArmingRunTests {
     func make(_ blindness: Blindness) {
         switch blindness {
         case .noFullCalendarAccess:
-            calendarReader.hasFullAccess = false
+            calendarStore.hasFullAccess = false
         case .noCalendarsVisible:
-            calendarReader.deviceCalendars = []
+            calendarStore.deviceCalendars = []
         case .chosenCalendarOnlyInAnotherAccount:
-            calendarReader.deviceCalendars = [
-                DeviceCalendar(identifier: "dienste-google", title: "Dienste", sourceIdentifier: "google"),
+            calendarStore.deviceCalendars = [
+                DeviceCalendar(identifier: "dienste-google", title: "Dienste", sourceIdentifier: "google", isEditable: true),
             ]
         case .chosenCalendarFoundTwice:
-            calendarReader.deviceCalendars = [
-                DeviceCalendar(identifier: "dienste-2", title: "Dienste", sourceIdentifier: "icloud"),
-                DeviceCalendar(identifier: "dienste-3", title: "Dienste", sourceIdentifier: "icloud"),
+            calendarStore.deviceCalendars = [
+                DeviceCalendar(identifier: "dienste-2", title: "Dienste", sourceIdentifier: "icloud", isEditable: true),
+                DeviceCalendar(identifier: "dienste-3", title: "Dienste", sourceIdentifier: "icloud", isEditable: true),
             ]
         case .alarmsNotAllowed:
             alarms.isAuthorized = false
@@ -450,7 +450,7 @@ struct ArmingRunTests {
     }
 
     func roster(_ events: CalendarEvent..., in calendar: String = "dienste") {
-        calendarReader.eventsByCalendar[calendar, default: []] += events
+        calendarStore.eventsByCalendar[calendar, default: []] += events
     }
 
     func allDay(_ title: String, on day: String) -> CalendarEvent {
@@ -460,6 +460,9 @@ struct ArmingRunTests {
     /// EventKit reports an all-day event's end as 23:59:59 on its last day.
     func allDay(_ title: String, from first: String, through last: String) -> CalendarEvent {
         CalendarEvent(
+            identifier: UUID().uuidString,
+            calendarIdentifier: "",
+            isRecurring: false,
             title: title,
             startDate: Self.instant("\(first) 00:00"),
             endDate: Self.instant("\(last) 23:59").addingTimeInterval(59),
@@ -470,6 +473,7 @@ struct ArmingRunTests {
     func timed(_ title: String, at start: String) -> CalendarEvent {
         let startDate = Self.instant(start)
         return CalendarEvent(
+            identifier: UUID().uuidString, calendarIdentifier: "", isRecurring: false,
             title: title, startDate: startDate, endDate: startDate.addingTimeInterval(8 * 60 * 60), isAllDay: false)
     }
 

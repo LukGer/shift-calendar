@@ -14,9 +14,26 @@ final class Skip {
     }
 }
 
+protocol SkippableShift {
+    var date: Date { get }
+    var shiftTypeID: UUID { get }
+}
+
+extension SkippableShift {
+    func isSkipped(by skips: [Skip]) -> Bool {
+        skips.contains { $0.date == date && $0.shiftTypeID == shiftTypeID }
+    }
+}
+
+extension Shift: SkippableShift {
+    var shiftTypeID: UUID { shiftType.id }
+}
+
+extension WindowShift: SkippableShift {}
+
 extension ModelContext {
     /// Skips the Shift, or un-skips it if it is skipped. The next Arming run cancels or re-arms its alarms.
-    func toggleSkip(of shift: WindowShift) throws {
+    func toggleSkip(of shift: some SkippableShift) throws {
         let date = shift.date
         let shiftTypeID = shift.shiftTypeID
         let skips = try fetch(FetchDescriptor<Skip>(

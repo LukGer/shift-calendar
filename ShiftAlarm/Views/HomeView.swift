@@ -2,7 +2,8 @@ import EventKit
 import SwiftData
 import SwiftUI
 
-/// Arms on launch, on every return to the foreground and whenever her calendar changes, and shows what the latest run armed.
+/// Arms on launch, on every return to the foreground and whenever her calendar changes, and shows what the latest run
+/// armed above a month of her Shifts.
 struct HomeView: View {
     @Environment(Arming.self) private var arming
     @Environment(\.modelContext) private var context
@@ -12,30 +13,55 @@ struct HomeView: View {
     @AppStorage("hasFinishedWalkthrough") private var hasFinishedWalkthrough = false
     /// EventKit only posts calendar changes while an event store is alive.
     @State private var watchedEventStore = EKEventStore()
+    @State private var month = Date.now
+    @State private var days: [GridDay] = []
+    @State private var shiftTypes: [ShiftType] = []
+    @State private var hasPlanningCalendar = false
+    @State private var openDate: Date?
+    @State private var opensSettingsAfterDaySheet = false
+    private let calendarStore = EventKitCalendarStore()
+    private let clock = SystemClock()
 
     var body: some View {
         NavigationStack {
-            NextShiftView(
-                result: arming.latestResult, notificationPermission: notificationPermission, toggleSkip: toggleSkip)
-                .navigationTitle("Next Shift")
+            CalendarHome(
+                result: arming.latestResult, notificationPermission: notificationPermission,
+                month: month, days: days, calendar: clock.calendar, moveMonth: moveMonth(by:),
+                openDay: { openDate = $0.date }, toggleSkip: toggleSkip)
+                .navigationTitle("Shifts")
                 .toolbar {
                     Button("Settings", systemImage: "gearshape") { isShowingSettings = true }
                 }
-                .sheet(isPresented: $isShowingSettings) {
+                .sheet(isPresented: $isShowingSettings, onDismiss: readMonth) {
                     SettingsView(notificationPermission: notificationPermission)
                 }
-                .fullScreenCover(isPresented: isShowingWalkthrough) {
+                .sheet(isPresented: isShowingDaySheet, onDismiss: closeDaySheet) {
+                    if let day = days.first(where: { $0.date == openDate }) {
+                        DaySheet(
+                            day: day, shiftTypes: shiftTypes, hasPlanningCalendar: hasPlanningCalendar,
+                            plan: { shiftType in try await readMonth { try await planning.plan(shiftType, on: day.date) } },
+                            takeOff: { shiftType in
+                                try await readMonth { try await planning.takeOff(shiftType, on: day.date) }
+                            },
+                            toggleSkip: { toggleSkip(of: Shift(date: day.date, shiftType: $0.shiftType)) },
+                            openSettings: {
+                                opensSettingsAfterDaySheet = true
+                                openDate = nil
+                            })
+                    }
+                }
+                .fullScreenCover(isPresented: isShowingWalkthrough, onDismiss: readMonth) {
                     Walkthrough()
                 }
         }
         .onChange(of: scenePhase, initial: true) { _, phase in
             if phase == .active {
-                Task { await arming.run() }
+                armThenReadMonth()
                 Task { notificationPermission = await UserNotificationsNotifier().permission() }
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: .EKEventStoreChanged, object: watchedEventStore)) { _ in
-            Task { await arming.run() }
+            armThenReadMonth()
         }
     }
 
@@ -43,210 +69,99 @@ struct HomeView: View {
         Binding { !hasFinishedWalkthrough } set: { hasFinishedWalkthrough = !$0 }
     }
 
-    private func toggleSkip(of shift: WindowShift) {
+    private var isShowingDaySheet: Binding<Bool> {
+        Binding { openDate != nil } set: { if !$0 { openDate = nil } }
+    }
+
+    /// Reads again in case she edited a Shift Type from the sheet. Settings can only open once the sheet has gone.
+    private func closeDaySheet() {
+        readMonth()
+        isShowingSettings = opensSettingsAfterDaySheet
+        opensSettingsAfterDaySheet = false
+    }
+
+    private func toggleSkip(of shift: some SkippableShift) {
         try? context.toggleSkip(of: shift)
-        Task { await arming.run() }
+        armThenReadMonth()
+    }
+
+    private var planning: Planning {
+        Planning(context: context, calendarStore: calendarStore, clock: clock, arming: arming)
+    }
+
+    private func readMonth(after change: () async throws -> Void) async throws {
+        defer { readMonth() }
+        try await change()
+    }
+
+    private func moveMonth(by months: Int) {
+        month = clock.calendar.date(byAdding: .month, value: months, to: month)!
+        readMonth()
+    }
+
+    /// Reads after the run, which prunes past Skips and drops those whose Shift Type changed.
+    private func armThenReadMonth() {
+        Task {
+            await arming.run()
+            readMonth()
+        }
+    }
+
+    private func readMonth() {
+        let chosenCalendars = (try? context.fetch(FetchDescriptor<ChosenCalendar>())) ?? []
+        shiftTypes = (try? context.fetch(FetchDescriptor<ShiftType>(sortBy: [SortDescriptor(\.createdAt)]))) ?? []
+        hasPlanningCalendar = chosenCalendars.planningCalendar(among: calendarStore.calendars()) != nil
+        days = calendarStore.monthOfShifts(
+            containing: month, in: chosenCalendars, of: shiftTypes,
+            skips: (try? context.fetch(FetchDescriptor<Skip>())) ?? [],
+            clock: clock)
     }
 }
 
-/// The next Shift in a hero card, then a compact row for every later Shift in the Arming Window.
-struct NextShiftView: View {
+/// The arming banner, the next Shift, then the month grid.
+struct CalendarHome: View {
     let result: ArmingResult?
     var notificationPermission: NotificationPermission?
+    let month: Date
+    let days: [GridDay]
+    let calendar: Calendar
+    let moveMonth: (_ months: Int) -> Void
+    let openDay: (GridDay) -> Void
     let toggleSkip: (WindowShift) -> Void
-
-    private let daysWithoutAShift: LocalizedStringKey = "Days without a Shift ring nothing."
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 ArmingBanner(result: result, notificationPermission: notificationPermission)
                 if case .armed(let shifts) = result {
-                    if let next = shifts.first {
-                        NextShiftCard(shift: next, toggleSkip: toggleSkip)
-                        LaterThisWeek(shifts: shifts.dropFirst(), toggleSkip: toggleSkip)
-                        Text(daysWithoutAShift)
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                    } else {
-                        ContentUnavailableView(
-                            "No Shifts this week",
-                            systemImage: "calendar",
-                            description: Text(daysWithoutAShift)
-                        )
-                    }
+                    NextShiftCard(shift: shifts.first, toggleSkip: toggleSkip)
+                } else if result == nil {
+                    ProgressView()
+                        .frame(maxWidth: .infinity)
                 }
+                MonthGrid(month: month, days: days, calendar: calendar, moveMonth: moveMonth, openDay: openDay)
             }
             .padding()
         }
         .background(Color(.systemGroupedBackground))
-        .overlay {
-            if result == nil {
-                ProgressView()
-            }
-        }
     }
 }
 
-private struct NextShiftCard: View {
-    let shift: WindowShift
-    let toggleSkip: (WindowShift) -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(dayTitle.uppercased())
-                .font(.caption.bold())
-                .opacity(0.8)
-            Text(shift.name)
-                .font(.largeTitle.bold())
-            if let first = shift.alarmTimes.first {
-                Text(first.text)
-                    .font(.system(size: 64, weight: .semibold, design: .rounded))
-                    .monospacedDigit()
-                    .strikethrough(shift.isSkipped)
-            } else {
-                Text(shift.alarmTimes.summary)
-                    .font(.title2)
-            }
-            if shift.isSkipped || shift.alarmTimes.count > 1 {
-                Text(shift.skippedOr("then " + shift.alarmTimes.dropFirst().summary))
-                    .monospacedDigit()
-            }
-            SkipButton(shift: shift, toggleSkip: toggleSkip)
-                .buttonStyle(.bordered)
-                .tint(.white)
-                .padding(.top, 8)
-        }
-        .foregroundStyle(.white)
-        .padding(20)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(shift.color.gradient, in: .rect(cornerRadius: 24))
-    }
-
-    private var dayTitle: String {
-        let calendar = Calendar.current
-        if calendar.isDateInToday(shift.date) { return "Today" }
-        if calendar.isDateInTomorrow(shift.date) { return "Tomorrow" }
-        return shift.date.formatted(.dateTime.weekday(.wide).day().month(.abbreviated))
-    }
-}
-
-private struct LaterThisWeek: View {
-    let shifts: ArraySlice<WindowShift>
-    let toggleSkip: (WindowShift) -> Void
-
-    var body: some View {
-        if !shifts.isEmpty {
-            Text("Later this week")
-                .font(.headline)
-                .padding(.top)
-            VStack(spacing: 0) {
-                ForEach(shifts) { shift in
-                    if shift != shifts.first {
-                        Divider()
-                    }
-                    HStack {
-                        Text(shift.date, format: .dateTime.weekday(.abbreviated).day())
-                            .frame(width: 64, alignment: .leading)
-                            .foregroundStyle(.secondary)
-                        Circle()
-                            .fill(shift.color)
-                            .frame(width: 10)
-                        Text(shift.name)
-                        Spacer()
-                        Text(shift.skippedOr(shift.alarmTimes.summary))
-                            .font(.subheadline.monospacedDigit())
-                            .foregroundStyle(shift.isSkipped ? .orange : .secondary)
-                        Menu {
-                            SkipButton(shift: shift, toggleSkip: toggleSkip)
-                        } label: {
-                            Label("Options", systemImage: "ellipsis.circle")
-                                .labelStyle(.iconOnly)
-                        }
-                    }
-                    .padding()
-                }
-            }
-            .background(.background, in: .rect(cornerRadius: 16))
-        }
-    }
-}
-
-private extension WindowShift {
-    func skippedOr(_ rings: String) -> String {
-        isSkipped ? "Skipped" : rings
-    }
-}
-
-private struct SkipButton: View {
-    let shift: WindowShift
-    let toggleSkip: (WindowShift) -> Void
-
-    var body: some View {
-        Button(shift.isSkipped ? "Ring for this Shift" : "Skip this Shift", systemImage: "moon.zzz") {
-            toggleSkip(shift)
-        }
-    }
-}
-
-#Preview("Shifts") {
+#Preview("Busy month") {
     NavigationStack {
-        NextShiftView(result: .armed([
-            .preview(inDays: 1, "Tagdienst", .orange, alarmTimes: ["05:00", "05:10", "05:20"]),
-            .preview(inDays: 2, "Nachtdienst", .indigo, alarmTimes: ["16:30", "16:45"]),
-            .preview(inDays: 3, "Nachtdienst", .indigo, alarmTimes: ["16:30", "16:45"], isSkipped: true),
-            .preview(inDays: 5, "Spätdienst", .teal, alarmTimes: []),
-        ]), toggleSkip: { _ in })
-        .navigationTitle("Next Shift")
-    }
-}
-
-#Preview("Next Shift skipped") {
-    NavigationStack {
-        NextShiftView(
-            result: .armed([.preview(inDays: 1, "Tagdienst", .orange, alarmTimes: ["05:00", "05:10"], isSkipped: true)]),
-            toggleSkip: { _ in }
-        )
-        .navigationTitle("Next Shift")
-    }
-}
-
-#Preview("Next Shift rings nothing") {
-    NavigationStack {
-        NextShiftView(result: .armed([.preview(inDays: 0, "Spätdienst", .teal, alarmTimes: [])]), toggleSkip: { _ in })
-            .navigationTitle("Next Shift")
-    }
-}
-
-#Preview("No Shifts") {
-    NavigationStack {
-        NextShiftView(result: .armed([]), toggleSkip: { _ in })
-            .navigationTitle("Next Shift")
+        CalendarHome(
+            result: .armed([.preview(inDays: 1, PreviewCalendarStore.tagdienst, alarmTimes: ["05:00", "05:10", "05:20"])]),
+            month: .now, days: PreviewCalendarStore.busyMonth, calendar: .current,
+            moveMonth: { _ in }, openDay: { _ in }, toggleSkip: { _ in })
+            .navigationTitle("Shifts")
     }
 }
 
 #Preview("Banner") {
     NavigationStack {
-        NextShiftView(result: .failed, toggleSkip: { _ in })
-            .navigationTitle("Next Shift")
-    }
-}
-
-private extension WindowShift {
-    static func preview(
-        inDays days: Int, _ name: String, _ color: Color, alarmTimes: [String], isSkipped: Bool = false
-    ) -> WindowShift {
-        let calendar = Calendar.current
-        return WindowShift(
-            date: calendar.date(byAdding: .day, value: days, to: calendar.startOfDay(for: .now))!,
-            shiftTypeID: UUID(),
-            name: name,
-            color: color,
-            alarmTimes: alarmTimes.map { text in
-                let parts = text.split(separator: ":").compactMap { Int($0) }
-                return AlarmTime(hour: parts[0], minute: parts[1])
-            },
-            isSkipped: isSkipped
-        )
+        CalendarHome(
+            result: .failed, month: .now, days: PreviewCalendarStore.busyMonth, calendar: .current,
+            moveMonth: { _ in }, openDay: { _ in }, toggleSkip: { _ in })
+            .navigationTitle("Shifts")
     }
 }

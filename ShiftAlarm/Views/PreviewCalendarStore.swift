@@ -1,0 +1,77 @@
+import SwiftUI
+
+/// A fake calendar for previews, holding a busy roster around today in her Shift Types: a double Shift tomorrow
+/// with one half Skipped, another double Shift, a Skipped Shift inside the Arming Window and one beyond it.
+struct PreviewCalendarStore: CalendarStore {
+    static let tagdienst = ShiftType(name: "Tagdienst", shortcut: "td", alarmSet: [.init(hour: 5, minute: 0)], colorIndex: 0)
+    static let nachtdienst = ShiftType(name: "Nachtdienst", shortcut: "nd", alarmSet: [.init(hour: 18, minute: 30)], colorIndex: 1)
+    static let hausrunde = ShiftType(name: "Hausrunde", shortcut: "hrn", alarmSet: [.init(hour: 6, minute: 15)], colorIndex: 2)
+    static let ambulanz = ShiftType(name: "Ambulanz", shortcut: "a11", alarmSet: [.init(hour: 9, minute: 0)], colorIndex: 3)
+    static let spät = ShiftType(name: "Spät", shortcut: "e6", alarmSet: [], colorIndex: 4)
+    static let shiftTypes = [tagdienst, nachtdienst, hausrunde, ambulanz, spät]
+
+    private static let shortcutsByDayFromToday: [Int: [String]] = [
+        -9: ["td"], -8: ["td"], -7: ["nd"], -6: ["nd"], -3: ["hrn"], -1: ["td"],
+        0: ["td"], 1: ["td", "hrn"], 2: ["nd"], 3: ["nd"], 6: ["a11"], 7: ["e6"], 8: ["e6"],
+        9: ["td"], 11: ["nd"], 12: ["nd"], 14: ["hrn"], 15: ["td"], 16: ["td", "a11"], 17: ["a11"], 20: ["td"],
+    ]
+
+    let hasFullAccess = true
+
+    func calendars() -> [DeviceCalendar] {
+        [DeviceCalendar(identifier: "dienste", title: "Dienste", sourceIdentifier: "icloud", isEditable: true)]
+    }
+
+    func events(inCalendars identifiers: [String], from start: Date, to end: Date) -> [CalendarEvent] {
+        Self.shortcutsByDayFromToday.flatMap { days, shortcuts in
+            shortcuts.map { shortcut in
+                let date = Self.date(inDays: days)
+                return CalendarEvent(
+                    identifier: "\(days)\(shortcut)", calendarIdentifier: "dienste", isRecurring: false,
+                    title: shortcut, startDate: date, endDate: date.addingTimeInterval(24 * 60 * 60 - 1),
+                    isAllDay: true)
+            }
+        }
+    }
+
+    func addAllDayEvent(titled title: String, on day: Date, inCalendar identifier: String) {}
+
+    func deleteEvent(identifier: String) {}
+
+    /// The month containing today.
+    static var busyMonth: [GridDay] {
+        PreviewCalendarStore().monthOfShifts(
+            containing: .now,
+            in: [ChosenCalendar(identifier: "dienste", title: "Dienste", sourceIdentifier: "icloud")],
+            of: shiftTypes,
+            skips: [
+                Skip(date: date(inDays: 1), shiftTypeID: hausrunde.id),
+                Skip(date: date(inDays: 3), shiftTypeID: nachtdienst.id),
+                Skip(date: date(inDays: 14), shiftTypeID: hausrunde.id),
+            ],
+            clock: SystemClock())
+    }
+
+    static func date(inDays days: Int) -> Date {
+        let calendar = Calendar.current
+        return calendar.date(byAdding: .day, value: days, to: calendar.startOfDay(for: .now))!
+    }
+}
+
+extension WindowShift {
+    static func preview(
+        inDays days: Int, _ shiftType: ShiftType, alarmTimes: [String], isSkipped: Bool = false
+    ) -> WindowShift {
+        WindowShift(
+            date: PreviewCalendarStore.date(inDays: days),
+            shiftTypeID: shiftType.id,
+            name: shiftType.name,
+            color: shiftType.color,
+            alarmTimes: alarmTimes.map { text in
+                let parts = text.split(separator: ":").compactMap { Int($0) }
+                return AlarmTime(hour: parts[0], minute: parts[1])
+            },
+            isSkipped: isSkipped
+        )
+    }
+}
