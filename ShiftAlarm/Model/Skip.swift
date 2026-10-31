@@ -14,7 +14,6 @@ final class Skip {
     }
 }
 
-/// A Shift as a Skip identifies it.
 protocol SkippableShift {
     var date: Date { get }
     var shiftTypeID: UUID { get }

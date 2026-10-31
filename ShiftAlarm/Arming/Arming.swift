@@ -62,7 +62,6 @@ final class Arming {
         return result
     }
 
-    /// From the start of today until about 7 days from now.
     static func armingWindow(at now: Date, calendar: Calendar) -> ClosedRange<Date> {
         calendar.startOfDay(for: now)...calendar.date(byAdding: .day, value: 7, to: now)!
     }

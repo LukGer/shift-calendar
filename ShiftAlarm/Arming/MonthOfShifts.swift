@@ -6,7 +6,7 @@ struct GridDay: Identifiable {
     /// False for the leading and trailing days that fill the first and last weeks.
     let isInMonth: Bool
     let isToday: Bool
-    /// Before today: the day sheet opens read-only.
+    /// Its day sheet can't plan or Skip.
     let isPast: Bool
     let shifts: [GridShift]
 
@@ -65,7 +65,6 @@ extension CalendarStore {
         return days
     }
 
-    /// The Shifts in her chosen calendars from `start` until `end`.
     func shiftsInCalendar(
         in chosenCalendars: [ChosenCalendar], of shiftTypes: [ShiftType], from start: Date, to end: Date,
         clock: WallClock
@@ -83,7 +82,6 @@ extension CalendarStore {
     }
 }
 
-/// A Shift with the events it is recognised in.
 struct ShiftInCalendar {
     let shift: Shift
     let events: [CalendarEvent]
