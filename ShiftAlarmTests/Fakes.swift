@@ -23,6 +23,19 @@ final class FakeCalendarStore: CalendarStore {
             }
         }
     }
+
+    /// Like EventKit, the event ends at 23:59:59 on its day.
+    func addAllDayEvent(titled title: String, on day: Date, inCalendar identifier: String) {
+        eventsByCalendar[identifier, default: []].append(CalendarEvent(
+            identifier: UUID().uuidString, calendarIdentifier: identifier, isRecurring: false, title: title,
+            startDate: day, endDate: day.addingTimeInterval(24 * 60 * 60 - 1), isAllDay: true))
+    }
+
+    func deleteEvent(identifier: String) {
+        for calendar in eventsByCalendar.keys {
+            eventsByCalendar[calendar]?.removeAll { $0.identifier == identifier }
+        }
+    }
 }
 
 /// Behaves like AlarmKit: scheduling an ID that is already armed throws.

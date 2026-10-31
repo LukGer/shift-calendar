@@ -34,6 +34,10 @@ struct PreviewRoster: CalendarStore {
         }
     }
 
+    func addAllDayEvent(titled title: String, on day: Date, inCalendar identifier: String) {}
+
+    func deleteEvent(identifier: String) {}
+
     /// The month containing today.
     var busyMonth: [GridDay] {
         monthOfShifts(

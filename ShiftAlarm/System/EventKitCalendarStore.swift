@@ -1,6 +1,6 @@
 import EventKit
 
-/// Reads her calendars through EventKit. Each call uses a fresh event store, so it sees access granted since the last call.
+/// Reads and writes her calendars through EventKit. Each call uses a fresh event store, so it sees access granted since the last call.
 struct EventKitCalendarStore: CalendarStore {
     var hasFullAccess: Bool {
         EKEventStore.authorizationStatus(for: .event) == .fullAccess
@@ -30,5 +30,23 @@ struct EventKitCalendarStore: CalendarStore {
                 isRecurring: $0.hasRecurrenceRules, title: $0.title ?? "",
                 startDate: $0.startDate, endDate: $0.endDate, isAllDay: $0.isAllDay)
         }
+    }
+
+    func addAllDayEvent(titled title: String, on day: Date, inCalendar identifier: String) throws {
+        let store = EKEventStore()
+        let event = EKEvent(eventStore: store)
+        event.calendar = store.calendar(withIdentifier: identifier)
+        event.title = title
+        event.isAllDay = true
+        event.startDate = day
+        event.endDate = day
+        event.alarms = []
+        try store.save(event, span: .thisEvent)
+    }
+
+    func deleteEvent(identifier: String) throws {
+        let store = EKEventStore()
+        guard let event = store.event(withIdentifier: identifier) else { return }
+        try store.remove(event, span: .thisEvent)
     }
 }

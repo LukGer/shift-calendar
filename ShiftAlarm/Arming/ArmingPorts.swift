@@ -3,11 +3,15 @@ import SwiftUI
 
 /// The Arming run's only ways to reach the system. Each has an adapter in the app and a fake in the tests.
 
+/// Arming only reads; Planning also writes.
 protocol CalendarStore {
     var hasFullAccess: Bool { get }
     /// Every calendar on the device; none before the first unlock after a reboot.
     func calendars() -> [DeviceCalendar]
     func events(inCalendars identifiers: [String], from start: Date, to end: Date) -> [CalendarEvent]
+    /// A plain all-day event on the one day starting at `day`: no alerts, notes or recurrence.
+    func addAllDayEvent(titled title: String, on day: Date, inCalendar identifier: String) throws
+    func deleteEvent(identifier: String) throws
 }
 
 protocol AlarmScheduler {
