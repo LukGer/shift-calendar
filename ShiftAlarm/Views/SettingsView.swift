@@ -65,6 +65,8 @@ struct SettingsView: View {
                     Text("Shifts are read from all-day events in these calendars.")
                 }
 
+                PlanningCalendarPicker(deviceCalendars: deviceCalendars)
+
                 ArmingStatusSection(notificationPermission: notificationPermission)
             }
             .navigationTitle("Settings")
