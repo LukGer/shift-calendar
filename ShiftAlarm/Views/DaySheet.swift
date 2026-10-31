@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// A day of the month grid: her Shift Types to tick, then Skip and Edit Shift Type for each Shift on it.
-/// Past days, and every day without a Planning Calendar, open read-only.
+/// Past days leave only Edit Shift Type; without a Planning Calendar her Shift Types are read-only.
 struct DaySheet: View {
     let day: GridDay
     let shiftTypes: [ShiftType]
@@ -23,9 +23,7 @@ struct DaySheet: View {
                         openSettings: openSettings)
                 } else {
                     shiftTypeToggles
-                    if !day.isPast {
-                        ForEach(day.shifts, id: \.shiftType.id, content: shiftActions)
-                    }
+                    ForEach(day.shifts, id: \.shiftType.id, content: shiftActions)
                     if !hasPlanningCalendar && !day.isPast {
                         SettingsNotice(
                             title: "Read-only", message: "Choose a calendar you can edit in Settings.",
@@ -83,11 +81,13 @@ struct DaySheet: View {
 
     private func shiftActions(for shift: GridShift) -> some View {
         Section(shift.shiftType.name) {
-            Button(
-                shift.isSkipped ? "Ring for this Shift" : "Skip this Shift",
-                systemImage: shift.isSkipped ? "bell" : "moon.zzz"
-            ) {
-                toggleSkip(shift)
+            if !day.isPast {
+                Button(
+                    shift.isSkipped ? "Ring for this Shift" : "Skip this Shift",
+                    systemImage: shift.isSkipped ? "bell" : "moon.zzz"
+                ) {
+                    toggleSkip(shift)
+                }
             }
             NavigationLink {
                 ShiftTypeEditor(shiftType: shift.shiftType)
