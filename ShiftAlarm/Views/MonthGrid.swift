@@ -6,8 +6,7 @@ struct MonthGrid: View {
     let month: Date
     let days: [GridDay]
     let calendar: Calendar
-    /// Moves by this many months.
-    let showMonth: (Int) -> Void
+    let moveMonth: (_ months: Int) -> Void
     let openDay: (GridDay) -> Void
 
     var body: some View {
@@ -16,9 +15,9 @@ struct MonthGrid: View {
                 Text(month, format: .dateTime.month(.wide).year())
                     .font(.title3.bold())
                 Spacer()
-                Button("Previous month", systemImage: "chevron.left") { showMonth(-1) }
+                Button("Previous month", systemImage: "chevron.left") { moveMonth(-1) }
                     .padding(.trailing, 12)
-                Button("Next month", systemImage: "chevron.right") { showMonth(1) }
+                Button("Next month", systemImage: "chevron.right") { moveMonth(1) }
             }
             .labelStyle(.iconOnly)
             .padding(.bottom, 4)
@@ -46,7 +45,7 @@ struct MonthGrid: View {
         .simultaneousGesture(DragGesture(minimumDistance: 30).onEnded { drag in
             let width = drag.translation.width
             guard abs(width) > abs(drag.translation.height) else { return }
-            showMonth(width < 0 ? 1 : -1)
+            moveMonth(width < 0 ? 1 : -1)
         })
     }
 
@@ -156,7 +155,7 @@ private struct Hatching: Shape {
 
 #Preview("Busy month") {
     MonthGrid(
-        month: .now, days: PreviewRoster.busyMonth, calendar: .current, showMonth: { _ in },
+        month: .now, days: PreviewCalendarStore.busyMonth, calendar: .current, moveMonth: { _ in },
         openDay: { _ in })
         .padding()
         .background(Color(.systemGroupedBackground))

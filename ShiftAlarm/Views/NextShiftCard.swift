@@ -65,12 +65,12 @@ struct NextShiftCard: View {
 #Preview("Card states") {
     VStack(spacing: 12) {
         NextShiftCard(
-            shift: .preview(inDays: 1, PreviewRoster.tagdienst, alarmTimes: ["05:00", "05:10", "05:20"]),
+            shift: .preview(inDays: 1, PreviewCalendarStore.tagdienst, alarmTimes: ["05:00", "05:10", "05:20"]),
             toggleSkip: { _ in })
         NextShiftCard(
-            shift: .preview(inDays: 2, PreviewRoster.nachtdienst, alarmTimes: ["16:30", "16:45"], isSkipped: true),
+            shift: .preview(inDays: 2, PreviewCalendarStore.nachtdienst, alarmTimes: ["16:30", "16:45"], isSkipped: true),
             toggleSkip: { _ in })
-        NextShiftCard(shift: .preview(inDays: 0, PreviewRoster.spät, alarmTimes: []), toggleSkip: { _ in })
+        NextShiftCard(shift: .preview(inDays: 0, PreviewCalendarStore.spät, alarmTimes: []), toggleSkip: { _ in })
         NextShiftCard(shift: nil, toggleSkip: { _ in })
     }
     .padding()

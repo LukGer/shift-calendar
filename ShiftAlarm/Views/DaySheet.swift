@@ -139,7 +139,7 @@ private extension PlanningRefusal {
     }
 }
 
-private extension PreviewRoster {
+private extension PreviewCalendarStore {
     static func day(inDays days: Int, _ shifts: [GridShift]) -> GridDay {
         GridDay(
             date: date(inDays: days),
@@ -152,7 +152,7 @@ private extension PreviewRoster {
 }
 
 private extension DaySheet {
-    init(day: GridDay, shiftTypes: [ShiftType] = PreviewRoster.shiftTypes, hasPlanningCalendar: Bool = true) {
+    init(day: GridDay, shiftTypes: [ShiftType] = PreviewCalendarStore.shiftTypes, hasPlanningCalendar: Bool = true) {
         self.init(
             day: day, shiftTypes: shiftTypes, hasPlanningCalendar: hasPlanningCalendar,
             plan: { _ in }, takeOff: { _ in }, toggleSkip: { _ in }, openSettings: {})
@@ -160,24 +160,24 @@ private extension DaySheet {
 }
 
 #Preview("A future day") {
-    DaySheet(day: PreviewRoster.day(inDays: 2, [PreviewRoster.shift(PreviewRoster.nachtdienst)]))
+    DaySheet(day: PreviewCalendarStore.day(inDays: 2, [PreviewCalendarStore.shift(PreviewCalendarStore.nachtdienst)]))
 }
 
 #Preview("A locked Shift") {
-    DaySheet(day: PreviewRoster.day(inDays: 5, [
-        PreviewRoster.shift(PreviewRoster.tagdienst, isLocked: true),
-        PreviewRoster.shift(PreviewRoster.hausrunde, isSkipped: true),
+    DaySheet(day: PreviewCalendarStore.day(inDays: 5, [
+        PreviewCalendarStore.shift(PreviewCalendarStore.tagdienst, isLocked: true),
+        PreviewCalendarStore.shift(PreviewCalendarStore.hausrunde, isSkipped: true),
     ]))
 }
 
 #Preview("A past day") {
-    DaySheet(day: PreviewRoster.day(inDays: -3, [PreviewRoster.shift(PreviewRoster.hausrunde, isLocked: true)]))
+    DaySheet(day: PreviewCalendarStore.day(inDays: -3, [PreviewCalendarStore.shift(PreviewCalendarStore.hausrunde, isLocked: true)]))
 }
 
 #Preview("No Planning Calendar") {
-    DaySheet(day: PreviewRoster.day(inDays: 2, []), hasPlanningCalendar: false)
+    DaySheet(day: PreviewCalendarStore.day(inDays: 2, []), hasPlanningCalendar: false)
 }
 
 #Preview("No Shift Types") {
-    DaySheet(day: PreviewRoster.day(inDays: 2, []), shiftTypes: [])
+    DaySheet(day: PreviewCalendarStore.day(inDays: 2, []), shiftTypes: [])
 }

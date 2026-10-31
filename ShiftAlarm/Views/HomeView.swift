@@ -26,7 +26,7 @@ struct HomeView: View {
         NavigationStack {
             CalendarHome(
                 result: arming.latestResult, notificationPermission: notificationPermission,
-                month: month, days: days, calendar: clock.calendar, showMonth: showMonth,
+                month: month, days: days, calendar: clock.calendar, moveMonth: moveMonth(by:),
                 openDay: { openDate = $0.date }, toggleSkip: toggleSkip)
                 .navigationTitle("Shifts")
                 .toolbar {
@@ -94,8 +94,8 @@ struct HomeView: View {
         try await change()
     }
 
-    private func showMonth(_ offset: Int) {
-        month = clock.calendar.date(byAdding: .month, value: offset, to: month)!
+    private func moveMonth(by months: Int) {
+        month = clock.calendar.date(byAdding: .month, value: months, to: month)!
         readMonth()
     }
 
@@ -125,7 +125,7 @@ struct CalendarHome: View {
     let month: Date
     let days: [GridDay]
     let calendar: Calendar
-    let showMonth: (Int) -> Void
+    let moveMonth: (_ months: Int) -> Void
     let openDay: (GridDay) -> Void
     let toggleSkip: (WindowShift) -> Void
 
@@ -139,7 +139,7 @@ struct CalendarHome: View {
                     ProgressView()
                         .frame(maxWidth: .infinity)
                 }
-                MonthGrid(month: month, days: days, calendar: calendar, showMonth: showMonth, openDay: openDay)
+                MonthGrid(month: month, days: days, calendar: calendar, moveMonth: moveMonth, openDay: openDay)
             }
             .padding()
         }
@@ -150,9 +150,9 @@ struct CalendarHome: View {
 #Preview("Busy month") {
     NavigationStack {
         CalendarHome(
-            result: .armed([.preview(inDays: 1, PreviewRoster.tagdienst, alarmTimes: ["05:00", "05:10", "05:20"])]),
-            month: .now, days: PreviewRoster.busyMonth, calendar: .current,
-            showMonth: { _ in }, openDay: { _ in }, toggleSkip: { _ in })
+            result: .armed([.preview(inDays: 1, PreviewCalendarStore.tagdienst, alarmTimes: ["05:00", "05:10", "05:20"])]),
+            month: .now, days: PreviewCalendarStore.busyMonth, calendar: .current,
+            moveMonth: { _ in }, openDay: { _ in }, toggleSkip: { _ in })
             .navigationTitle("Shifts")
     }
 }
@@ -160,8 +160,8 @@ struct CalendarHome: View {
 #Preview("Banner") {
     NavigationStack {
         CalendarHome(
-            result: .failed, month: .now, days: PreviewRoster.busyMonth, calendar: .current,
-            showMonth: { _ in }, openDay: { _ in }, toggleSkip: { _ in })
+            result: .failed, month: .now, days: PreviewCalendarStore.busyMonth, calendar: .current,
+            moveMonth: { _ in }, openDay: { _ in }, toggleSkip: { _ in })
             .navigationTitle("Shifts")
     }
 }

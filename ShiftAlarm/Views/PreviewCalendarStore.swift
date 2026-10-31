@@ -1,8 +1,8 @@
 import SwiftUI
 
-/// A busy roster around today in her Shift Types, for previews: a double Shift tomorrow with one half Skipped,
-/// another double Shift, a Skipped Shift inside the Arming Window and one beyond it.
-struct PreviewRoster: CalendarStore {
+/// A fake calendar for previews, holding a busy roster around today in her Shift Types: a double Shift tomorrow
+/// with one half Skipped, another double Shift, a Skipped Shift inside the Arming Window and one beyond it.
+struct PreviewCalendarStore: CalendarStore {
     static let tagdienst = ShiftType(name: "Tagdienst", shortcut: "td", alarmSet: [.init(hour: 5, minute: 0)], colorIndex: 0)
     static let nachtdienst = ShiftType(name: "Nachtdienst", shortcut: "nd", alarmSet: [.init(hour: 18, minute: 30)], colorIndex: 1)
     static let hausrunde = ShiftType(name: "Hausrunde", shortcut: "hrn", alarmSet: [.init(hour: 6, minute: 15)], colorIndex: 2)
@@ -40,7 +40,7 @@ struct PreviewRoster: CalendarStore {
 
     /// The month containing today.
     static var busyMonth: [GridDay] {
-        PreviewRoster().monthOfShifts(
+        PreviewCalendarStore().monthOfShifts(
             containing: .now,
             in: [ChosenCalendar(identifier: "dienste", title: "Dienste", sourceIdentifier: "icloud")],
             of: shiftTypes,
@@ -63,7 +63,7 @@ extension WindowShift {
         inDays days: Int, _ shiftType: ShiftType, alarmTimes: [String], isSkipped: Bool = false
     ) -> WindowShift {
         WindowShift(
-            date: PreviewRoster.date(inDays: days),
+            date: PreviewCalendarStore.date(inDays: days),
             shiftTypeID: shiftType.id,
             name: shiftType.name,
             color: shiftType.color,
