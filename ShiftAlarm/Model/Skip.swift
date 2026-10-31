@@ -22,9 +22,7 @@ extension Shift {
 
 extension ModelContext {
     /// Skips the Shift, or un-skips it if it is skipped. The next Arming run cancels or re-arms its alarms.
-    func toggleSkip(of shift: WindowShift) throws {
-        let date = shift.date
-        let shiftTypeID = shift.shiftTypeID
+    func toggleSkip(on date: Date, of shiftTypeID: UUID) throws {
         let skips = try fetch(FetchDescriptor<Skip>(
             predicate: #Predicate { $0.date == date && $0.shiftTypeID == shiftTypeID }))
         if skips.isEmpty {

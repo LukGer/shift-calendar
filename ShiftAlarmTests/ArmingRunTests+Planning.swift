@@ -125,7 +125,68 @@ extension ArmingRunTests {
         #expect(calendarHolds == before)
     }
 
+    /// Toggles on 2031-03-03 over a Tagdienst there: "+nd" ticks Nachtdienst, "-td" unticks Tagdienst.
+    @Test(arguments: [
+        (["-td", "+nd"], ["dienste 2031-03-03 nd"], ["2031-03-03 18:30 Nachtdienst"]),
+        (["+hrn"], ["dienste 2031-03-03 hrn", "dienste 2031-03-03 td"],
+         ["2031-03-03 05:00 Tagdienst", "2031-03-03 06:15 Hausrunde"]),
+        (["-td", "+td"], ["dienste 2031-03-03 td"], ["2031-03-03 05:00 Tagdienst"]),
+        (["-td"], [], []),
+    ])
+    func changingADaysShiftOrPlanningASecondOneArmsWhatIsThereAfterwards(
+        toggles: [String], expectedEvents: [String], expectedAlarms: [String]
+    ) async throws {
+        addHerShiftTypes()
+        roster(allDay("td", on: "2031-03-03"))
+        await arming.run()
+
+        for toggle in toggles {
+            let shortcut = String(toggle.dropFirst())
+            if toggle.hasPrefix("+") {
+                try await plan(shortcut, on: "2031-03-03")
+            } else {
+                try await takeOff(shortcut, on: "2031-03-03")
+            }
+        }
+
+        #expect(calendarHolds == expectedEvents)
+        #expect(armedAlarms == expectedAlarms)
+    }
+
+    /// Inside the Arming Window, beyond it, and in another month.
+    @Test(arguments: ["2031-03-03", "2031-03-20", "2031-04-02"])
+    func skippingAndUnSkippingFromTheDaySheetWorksForAnyFutureShift(date: String) async throws {
+        addHerShiftTypes()
+        roster(allDay("td", on: date))
+        let month = String(date.prefix(7))
+
+        try toggleSkip("td", on: date)
+        let skipped = try shifts(in: month, where: \.isSkipped)
+        try toggleSkip("td", on: date)
+
+        #expect(skipped == ["\(date) td"])
+        #expect(try shifts(in: month, where: \.isSkipped) == [])
+    }
+
+    @Test(arguments: ["2031-03-03", "2031-03-20"])
+    func aSkipSurvivesTakingTheShiftOffAndPlanningItAgain(date: String) async throws {
+        addHerShiftTypes()
+        roster(allDay("td", on: date))
+        try toggleSkip("td", on: date)
+        await arming.run()
+
+        try await takeOff("td", on: date)
+        try await plan("td", on: date)
+
+        #expect(armedAlarms == [])
+        #expect(try shifts(in: "2031-03", where: \.isSkipped) == ["\(date) td"])
+    }
+
     // MARK: - Fixtures
+
+    func toggleSkip(_ shortcut: String, on date: String) throws {
+        try container.mainContext.toggleSkip(on: Self.instant("\(date) 00:00"), of: try shiftType(shortcut).id)
+    }
 
     func takeOff(_ shortcut: String, on date: String) async throws {
         try await planning.toggleOff(try shiftType(shortcut), on: Self.instant("\(date) 00:00"))

@@ -114,7 +114,8 @@ extension ArmingRunTests {
     // MARK: - Fixtures
 
     func toggleSkip(_ date: String, _ name: String, in result: ArmingResult) throws {
-        try container.mainContext.toggleSkip(of: try #require(Self.windowShift(on: date, name, in: result)))
+        let shift = try #require(Self.windowShift(on: date, name, in: result))
+        try container.mainContext.toggleSkip(on: shift.date, of: shift.shiftTypeID)
     }
 
     static func windowShift(on date: String, _ name: String, in result: ArmingResult) -> WindowShift? {

@@ -50,7 +50,7 @@ struct HomeView: View {
     }
 
     private func toggleSkip(of shift: WindowShift) {
-        try? context.toggleSkip(of: shift)
+        try? context.toggleSkip(on: shift.date, of: shift.shiftTypeID)
         armThenReadMonth()
     }
 
