@@ -27,7 +27,7 @@ struct HomeView: View {
             CalendarHome(
                 result: arming.latestResult, notificationPermission: notificationPermission,
                 month: month, days: days, calendar: clock.calendar, showMonth: showMonth,
-                openDay: { openDate = $0.date }, toggleSkip: { toggleSkip(on: $0.date, of: $0.shiftTypeID) })
+                openDay: { openDate = $0.date }, toggleSkip: toggleSkip)
                 .navigationTitle("Shifts")
                 .toolbar {
                     Button("Settings", systemImage: "gearshape") { isShowingSettings = true }
@@ -43,7 +43,7 @@ struct HomeView: View {
                             takeOff: { shiftType in
                                 try await readMonth { try await planning.takeOff(shiftType, on: day.date) }
                             },
-                            toggleSkip: { toggleSkip(on: day.date, of: $0.shiftType.id) },
+                            toggleSkip: { toggleSkip(of: Shift(date: day.date, shiftType: $0.shiftType)) },
                             openSettings: {
                                 opensSettingsAfterDaySheet = true
                                 openDate = nil
@@ -80,8 +80,8 @@ struct HomeView: View {
         opensSettingsAfterDaySheet = false
     }
 
-    private func toggleSkip(on date: Date, of shiftTypeID: UUID) {
-        try? context.toggleSkip(on: date, of: shiftTypeID)
+    private func toggleSkip(of shift: some SkippableShift) {
+        try? context.toggleSkip(of: shift)
         armThenReadMonth()
     }
 

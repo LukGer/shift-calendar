@@ -185,7 +185,8 @@ extension ArmingRunTests {
     // MARK: - Fixtures
 
     func toggleSkip(_ shortcut: String, on date: String) throws {
-        try container.mainContext.toggleSkip(on: Self.instant("\(date) 00:00"), of: try shiftType(shortcut).id)
+        try container.mainContext.toggleSkip(
+            of: Shift(date: Self.instant("\(date) 00:00"), shiftType: try shiftType(shortcut)))
     }
 
     func takeOff(_ shortcut: String, on date: String) async throws {
