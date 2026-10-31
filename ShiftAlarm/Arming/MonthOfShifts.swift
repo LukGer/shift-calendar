@@ -6,6 +6,8 @@ struct GridDay: Identifiable {
     /// False for the leading and trailing days that fill the first and last weeks.
     let isInMonth: Bool
     let isToday: Bool
+    /// Before today: the day sheet opens read-only.
+    let isPast: Bool
     let shifts: [GridShift]
 
     var id: Date { date }
@@ -44,6 +46,7 @@ extension CalendarStore {
                 date: date,
                 isInMonth: calendar.isDate(date, equalTo: day, toGranularity: .month),
                 isToday: date == armingWindow.lowerBound,
+                isPast: date < armingWindow.lowerBound,
                 shifts: (shiftsByDate[date] ?? []).map { shift, _, isLocked in
                     GridShift(
                         shiftType: shift.shiftType,

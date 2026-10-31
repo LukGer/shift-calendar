@@ -39,6 +39,19 @@ extension ArmingRunTests {
         #expect(days.filter(\.isToday).map { Self.day($0.date) } == expected)
     }
 
+    /// With weeks from Sunday, February's grid ends on 2031-03-01 and April's starts on 2031-03-30.
+    @Test(arguments: [
+        ("2031-03", ["2031-02-23", "2031-03-01"]),
+        ("2031-02", ["2031-01-26", "2031-03-01"]),
+        ("2031-04", []),
+    ])
+    func theDaysBeforeTodayArePast(month: String, firstAndLastPastDay: [String]) throws {
+        let pastDays = try monthOfShifts(month).filter(\.isPast).map { Self.day($0.date) }
+
+        #expect([pastDays.first, pastDays.last].compactMap(\.self) == firstAndLastPastDay)
+        #expect(try monthOfShifts(month).prefix(pastDays.count).allSatisfy(\.isPast))
+    }
+
     /// March's grid runs from Sunday 2031-02-23 to Saturday 2031-04-05.
     nonisolated static let rostersInMarchsGrid: [([(String, String, String)], [String])] = [
         ([("td", "2031-03-03", "2031-03-03")], ["2031-03-03 td"]),
