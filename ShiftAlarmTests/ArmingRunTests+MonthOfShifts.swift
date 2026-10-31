@@ -98,7 +98,7 @@ extension ArmingRunTests {
     ) throws {
         addHerShiftTypes()
         roster(allDay("td", on: "2031-03-03"), allDay("td", on: "2031-03-20"), allDay("hrn", on: "2031-03-20"))
-        try skip(date, shortcut)
+        try toggleSkip(shortcut, on: date)
 
         #expect(try shifts(in: "2031-03", where: \.isSkipped) == expected)
     }
@@ -122,7 +122,7 @@ extension ArmingRunTests {
         addHerShiftTypes()
         roster(allDay(shortcut, on: date))
         if isSkipped {
-            try skip(date, shortcut)
+            try toggleSkip(shortcut, on: date)
         }
 
         #expect(try shifts(in: "2031-03", where: \.hasAlarmArmed) == (isArmed ? ["\(date) \(shortcut)"] : []))
@@ -176,25 +176,16 @@ extension ArmingRunTests {
         case .aRecurringEvent:
             roster(recurring)
         case .anEventInACalendarSheCantEdit:
-            try chooseACalendarSheCantEdit()
+            try choose(.oneEditableAndOneSheCantEdit)
             roster(allDay("td", on: "2031-03-03"), in: "feiertage")
         case .aSingleDayEventAndARecurringOne:
             roster(allDay("td", on: "2031-03-03"), recurring)
         case .aSingleDayEventAndOneInACalendarSheCantEdit:
-            try chooseACalendarSheCantEdit()
+            try choose(.oneEditableAndOneSheCantEdit)
             roster(allDay("td", on: "2031-03-03"))
             roster(allDay("td", on: "2031-03-03"), in: "feiertage")
         }
         return "2031-03-03"
-    }
-
-    /// A subscribed calendar, say.
-    func chooseACalendarSheCantEdit() throws {
-        calendarStore.deviceCalendars.append(
-            DeviceCalendar(identifier: "feiertage", title: "Feiertage", sourceIdentifier: "icloud", isEditable: false))
-        container.mainContext.insert(
-            ChosenCalendar(identifier: "feiertage", title: "Feiertage", sourceIdentifier: "icloud"))
-        try container.mainContext.save()
     }
 
     /// "2031-03-03 td" for each Shift in the month's grid that `isMarked`.
@@ -202,13 +193,6 @@ extension ArmingRunTests {
         try monthOfShifts(month).flatMap { day in
             day.shifts.filter(isMarked).map { "\(Self.day(day.date)) \($0.shiftType.shortcut)" }
         }
-    }
-
-    func skip(_ date: String, _ shortcut: String) throws {
-        let context = container.mainContext
-        let shiftType = try #require(try context.fetch(FetchDescriptor<ShiftType>()).first { $0.shortcut == shortcut })
-        context.insert(Skip(date: Self.instant("\(date) 00:00"), shiftTypeID: shiftType.id))
-        try context.save()
     }
 
     /// "2031-03-03 td hrn" for each grid day with Shifts.
