@@ -21,7 +21,7 @@ struct GridShift {
     let isLocked: Bool
 }
 
-extension CalendarReader {
+extension CalendarStore {
     /// Every day of the weeks the month containing `day` touches, starting on the locale's first weekday,
     /// with the Shifts on it.
     func monthOfShifts(

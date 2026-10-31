@@ -169,7 +169,7 @@ extension ArmingRunTests {
 
     /// A subscribed calendar, say.
     func chooseACalendarSheCantEdit() throws {
-        calendarReader.deviceCalendars.append(
+        calendarStore.deviceCalendars.append(
             DeviceCalendar(identifier: "feiertage", title: "Feiertage", sourceIdentifier: "icloud", isEditable: false))
         container.mainContext.insert(
             ChosenCalendar(identifier: "feiertage", title: "Feiertage", sourceIdentifier: "icloud"))
@@ -201,7 +201,7 @@ extension ArmingRunTests {
         var calendar = Self.vienna
         calendar.firstWeekday = firstWeekday
         let context = container.mainContext
-        return calendarReader.monthOfShifts(
+        return calendarStore.monthOfShifts(
             containing: Self.instant("\(month)-15 12:00"),
             in: try context.fetch(FetchDescriptor<ChosenCalendar>()),
             of: try context.fetch(FetchDescriptor<ShiftType>()),

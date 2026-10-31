@@ -6,7 +6,7 @@ import SwiftData
 @Observable
 final class Arming {
     @ObservationIgnored private let openStore: @MainActor () throws -> ModelContainer
-    @ObservationIgnored private let calendarReader: CalendarReader
+    @ObservationIgnored private let calendarStore: CalendarStore
     @ObservationIgnored private let alarmScheduler: AlarmScheduler
     @ObservationIgnored private let notifier: Notifier
     @ObservationIgnored private let clock: WallClock
@@ -14,14 +14,14 @@ final class Arming {
 
     init(
         openStore: @escaping @MainActor () throws -> ModelContainer,
-        calendarReader: CalendarReader,
+        calendarStore: CalendarStore,
         alarmScheduler: AlarmScheduler,
         notifier: Notifier,
         clock: WallClock,
         afterEachRun: @escaping @MainActor () -> Void = {}
     ) {
         self.openStore = openStore
-        self.calendarReader = calendarReader
+        self.calendarStore = calendarStore
         self.alarmScheduler = alarmScheduler
         self.notifier = notifier
         self.clock = clock
@@ -75,7 +75,7 @@ final class Arming {
         let chosenCalendars = try context.fetch(FetchDescriptor<ChosenCalendar>())
         if let reason = reasonToChangeNoAlarm(chosenCalendars: chosenCalendars) { return .skipped(reason) }
         let window = Self.armingWindow(at: now, calendar: calendar)
-        let events = calendarReader.events(
+        let events = calendarStore.events(
             inCalendars: chosenCalendars.map(\.identifier),
             from: window.lowerBound,
             to: window.upperBound
@@ -91,8 +91,8 @@ final class Arming {
     }
 
     private func reasonToChangeNoAlarm(chosenCalendars: [ChosenCalendar]) -> SkipReason? {
-        let deviceCalendars = calendarReader.calendars()
-        guard calendarReader.hasFullAccess, !deviceCalendars.isEmpty else { return .calendarNotReadable }
+        let deviceCalendars = calendarStore.calendars()
+        guard calendarStore.hasFullAccess, !deviceCalendars.isEmpty else { return .calendarNotReadable }
         guard chosenCalendars.allSatisfy({ $0.isFound(among: deviceCalendars) }) else { return .chosenCalendarMissing }
         guard alarmScheduler.isAuthorized else { return .alarmsNotAllowed }
         return nil

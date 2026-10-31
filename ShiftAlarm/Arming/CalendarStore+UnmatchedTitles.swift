@@ -1,6 +1,6 @@
 import Foundation
 
-extension CalendarReader {
+extension CalendarStore {
     /// The all-day titles in her roster, from today to three months ahead, that are not a Shift Type yet:
     /// what Settings and the walkthrough offer to make into Shift Types.
     func unmatchedTitles(

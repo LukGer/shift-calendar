@@ -15,7 +15,7 @@ struct HomeView: View {
     @State private var watchedEventStore = EKEventStore()
     @State private var month = Date.now
     @State private var days: [GridDay] = []
-    private let calendarReader = EventKitReader()
+    private let calendarStore = EventKitCalendarStore()
     private let clock = SystemClock()
 
     var body: some View {
@@ -68,7 +68,7 @@ struct HomeView: View {
     }
 
     private func readMonth() {
-        days = calendarReader.monthOfShifts(
+        days = calendarStore.monthOfShifts(
             containing: month,
             in: (try? context.fetch(FetchDescriptor<ChosenCalendar>())) ?? [],
             of: (try? context.fetch(FetchDescriptor<ShiftType>())) ?? [],

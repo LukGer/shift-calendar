@@ -49,7 +49,7 @@ extension ArmingRunTests {
         try toggleSkip("2031-03-03", "Tagdienst", in: await arming.run())
         await arming.run()
 
-        calendarReader.eventsByCalendar["dienste"] = []
+        calendarStore.eventsByCalendar["dienste"] = []
         await arming.run()
         roster(allDay(reAddedTitle, on: "2031-03-03"))
         let result = await arming.run()
@@ -70,7 +70,7 @@ extension ArmingRunTests {
         try toggleSkip("2031-03-03", "Tagdienst", in: await arming.run())
         await arming.run()
 
-        calendarReader.eventsByCalendar["dienste"] = [allDay(newTitle, on: "2031-03-03")]
+        calendarStore.eventsByCalendar["dienste"] = [allDay(newTitle, on: "2031-03-03")]
         let result = await arming.run()
 
         #expect(armedAlarms == expectedAlarms)
@@ -84,9 +84,9 @@ extension ArmingRunTests {
         try toggleSkip("2031-03-03", "Nachtdienst", in: await arming.run())
         await arming.run()
 
-        calendarReader.eventsByCalendar["dienste"] = [allDay(otherTitle, on: "2031-03-03")]
+        calendarStore.eventsByCalendar["dienste"] = [allDay(otherTitle, on: "2031-03-03")]
         await arming.run()
-        calendarReader.eventsByCalendar["dienste"] = [allDay("nd", on: "2031-03-03")]
+        calendarStore.eventsByCalendar["dienste"] = [allDay("nd", on: "2031-03-03")]
         let result = await arming.run()
 
         #expect(armedAlarms == ["2031-03-03 18:30 Nachtdienst"])

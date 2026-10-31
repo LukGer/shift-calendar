@@ -8,7 +8,7 @@ struct SettingsView: View {
     @Query private var chosenCalendars: [ChosenCalendar]
     @State private var deviceCalendars: [DeviceCalendar] = []
     @State private var unmatchedTitles: [String] = []
-    private let calendarReader = EventKitReader()
+    private let calendarStore = EventKitCalendarStore()
 
     var body: some View {
         NavigationStack {
@@ -74,11 +74,11 @@ struct SettingsView: View {
                 }
             }
             .task(id: chosenCalendars.map(\.identifier) + shiftTypes.map(\.shortcut)) {
-                await calendarReader.requestAccess()
+                await calendarStore.requestAccess()
                 await AlarmKitScheduler().requestAuthorization()
                 await UserNotificationsNotifier().requestAuthorization()
-                deviceCalendars = calendarReader.calendars()
-                unmatchedTitles = calendarReader.unmatchedTitles(
+                deviceCalendars = calendarStore.calendars()
+                unmatchedTitles = calendarStore.unmatchedTitles(
                     in: chosenCalendars, of: shiftTypes, now: .now, calendar: .current)
             }
         }

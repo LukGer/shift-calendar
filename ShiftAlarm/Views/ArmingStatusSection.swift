@@ -10,7 +10,7 @@ struct ArmingStatusSection: View {
 
     var body: some View {
         Section("Status") {
-            LabeledContent("Calendar access", value: EventKitReader().hasFullAccess ? "Allowed" : "Not allowed")
+            LabeledContent("Calendar access", value: EventKitCalendarStore().hasFullAccess ? "Allowed" : "Not allowed")
             LabeledContent("Alarms", value: AlarmKitScheduler().isAuthorized ? "Allowed" : "Not allowed")
             LabeledContent("Notifications", value: notificationsValue)
             LabeledContent("Last armed") {

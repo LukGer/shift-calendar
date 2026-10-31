@@ -42,7 +42,7 @@ extension ArmingRunTests {
 
     func unmatchedTitles() throws -> [String] {
         let context = container.mainContext
-        return calendarReader.unmatchedTitles(
+        return calendarStore.unmatchedTitles(
             in: try context.fetch(FetchDescriptor<ChosenCalendar>()),
             of: try context.fetch(FetchDescriptor<ShiftType>()),
             now: clock.now,

@@ -2,7 +2,7 @@ import Foundation
 @testable import ShiftAlarm
 
 @MainActor
-final class FakeCalendarReader: CalendarReader {
+final class FakeCalendarStore: CalendarStore {
     var hasFullAccess = true
     var deviceCalendars = [
         DeviceCalendar(identifier: "dienste", title: "Dienste", sourceIdentifier: "icloud", isEditable: true),

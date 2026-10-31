@@ -3,7 +3,7 @@ import SwiftUI
 
 /// The Arming run's only ways to reach the system. Each has an adapter in the app and a fake in the tests.
 
-protocol CalendarReader {
+protocol CalendarStore {
     var hasFullAccess: Bool { get }
     /// Every calendar on the device; none before the first unlock after a reboot.
     func calendars() -> [DeviceCalendar]

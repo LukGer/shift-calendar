@@ -1,7 +1,7 @@
 import EventKit
 
 /// Reads her calendars through EventKit. Each call uses a fresh event store, so it sees access granted since the last call.
-struct EventKitReader: CalendarReader {
+struct EventKitCalendarStore: CalendarStore {
     var hasFullAccess: Bool {
         EKEventStore.authorizationStatus(for: .event) == .fullAccess
     }

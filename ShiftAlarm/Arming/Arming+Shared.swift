@@ -4,7 +4,7 @@ extension Arming {
     /// The run every trigger in the app calls. Each run asks iOS for the next background refresh.
     static let shared = Arming(
         openStore: { try SharedStore.container() },
-        calendarReader: EventKitReader(),
+        calendarStore: EventKitCalendarStore(),
         alarmScheduler: AlarmKitScheduler(),
         notifier: UserNotificationsNotifier(),
         clock: SystemClock(),
