@@ -15,6 +15,10 @@ struct HomeView: View {
     @State private var watchedEventStore = EKEventStore()
     @State private var month = Date.now
     @State private var days: [GridDay] = []
+    @State private var shiftTypes: [ShiftType] = []
+    @State private var hasPlanningCalendar = false
+    @State private var openDate: Date?
+    @State private var opensSettingsAfterDaySheet = false
     private let calendarStore = EventKitCalendarStore()
     private let clock = SystemClock()
 
@@ -22,13 +26,26 @@ struct HomeView: View {
         NavigationStack {
             CalendarHome(
                 result: arming.latestResult, notificationPermission: notificationPermission,
-                month: month, days: days, calendar: clock.calendar, showMonth: showMonth, toggleSkip: toggleSkip)
+                month: month, days: days, calendar: clock.calendar, showMonth: showMonth,
+                openDay: { openDate = $0.date }, toggleSkip: { toggleSkip(on: $0.date, of: $0.shiftTypeID) })
                 .navigationTitle("Shifts")
                 .toolbar {
                     Button("Settings", systemImage: "gearshape") { isShowingSettings = true }
                 }
                 .sheet(isPresented: $isShowingSettings, onDismiss: readMonth) {
                     SettingsView(notificationPermission: notificationPermission)
+                }
+                .sheet(isPresented: isShowingDaySheet, onDismiss: closeDaySheet) {
+                    if let day = days.first(where: { $0.date == openDate }) {
+                        DaySheet(
+                            day: day, shiftTypes: shiftTypes, hasPlanningCalendar: hasPlanningCalendar,
+                            toggle: { try await toggle($0, on: day.date, isOn: $1) },
+                            toggleSkip: { toggleSkip(on: day.date, of: $0.shiftType.id) },
+                            openSettings: {
+                                opensSettingsAfterDaySheet = true
+                                openDate = nil
+                            })
+                    }
                 }
                 .fullScreenCover(isPresented: isShowingWalkthrough, onDismiss: readMonth) {
                     Walkthrough()
@@ -49,9 +66,30 @@ struct HomeView: View {
         Binding { !hasFinishedWalkthrough } set: { hasFinishedWalkthrough = !$0 }
     }
 
-    private func toggleSkip(of shift: WindowShift) {
-        try? context.toggleSkip(on: shift.date, of: shift.shiftTypeID)
+    private var isShowingDaySheet: Binding<Bool> {
+        Binding { openDate != nil } set: { if !$0 { openDate = nil } }
+    }
+
+    /// Reads again in case she edited a Shift Type from the sheet. Settings can only open once the sheet has gone.
+    private func closeDaySheet() {
+        readMonth()
+        isShowingSettings = opensSettingsAfterDaySheet
+        opensSettingsAfterDaySheet = false
+    }
+
+    private func toggleSkip(on date: Date, of shiftTypeID: UUID) {
+        try? context.toggleSkip(on: date, of: shiftTypeID)
         armThenReadMonth()
+    }
+
+    private func toggle(_ shiftType: ShiftType, on date: Date, isOn: Bool) async throws {
+        let planning = Planning(context: context, calendarStore: calendarStore, clock: clock, arming: arming)
+        defer { readMonth() }
+        if isOn {
+            try await planning.toggleOn(shiftType, on: date)
+        } else {
+            try await planning.toggleOff(shiftType, on: date)
+        }
     }
 
     private func showMonth(_ offset: Int) {
@@ -68,10 +106,11 @@ struct HomeView: View {
     }
 
     private func readMonth() {
+        let chosenCalendars = (try? context.fetch(FetchDescriptor<ChosenCalendar>())) ?? []
+        shiftTypes = (try? context.fetch(FetchDescriptor<ShiftType>(sortBy: [SortDescriptor(\.createdAt)]))) ?? []
+        hasPlanningCalendar = chosenCalendars.planningCalendar(among: calendarStore.calendars()) != nil
         days = calendarStore.monthOfShifts(
-            containing: month,
-            in: (try? context.fetch(FetchDescriptor<ChosenCalendar>())) ?? [],
-            of: (try? context.fetch(FetchDescriptor<ShiftType>())) ?? [],
+            containing: month, in: chosenCalendars, of: shiftTypes,
             skips: (try? context.fetch(FetchDescriptor<Skip>())) ?? [],
             clock: clock)
     }
@@ -85,6 +124,7 @@ struct CalendarHome: View {
     let days: [GridDay]
     let calendar: Calendar
     let showMonth: (Int) -> Void
+    let openDay: (GridDay) -> Void
     let toggleSkip: (WindowShift) -> Void
 
     var body: some View {
@@ -97,7 +137,7 @@ struct CalendarHome: View {
                     ProgressView()
                         .frame(maxWidth: .infinity)
                 }
-                MonthGrid(month: month, days: days, calendar: calendar, showMonth: showMonth)
+                MonthGrid(month: month, days: days, calendar: calendar, showMonth: showMonth, openDay: openDay)
             }
             .padding()
         }
@@ -110,7 +150,7 @@ struct CalendarHome: View {
         CalendarHome(
             result: .armed([.preview(inDays: 1, PreviewRoster.tagdienst, alarmTimes: ["05:00", "05:10", "05:20"])]),
             month: .now, days: PreviewRoster(clock: SystemClock()).busyMonth, calendar: .current,
-            showMonth: { _ in }, toggleSkip: { _ in })
+            showMonth: { _ in }, openDay: { _ in }, toggleSkip: { _ in })
             .navigationTitle("Shifts")
     }
 }
@@ -119,7 +159,7 @@ struct CalendarHome: View {
     NavigationStack {
         CalendarHome(
             result: .failed, month: .now, days: PreviewRoster(clock: SystemClock()).busyMonth, calendar: .current,
-            showMonth: { _ in }, toggleSkip: { _ in })
+            showMonth: { _ in }, openDay: { _ in }, toggleSkip: { _ in })
             .navigationTitle("Shifts")
     }
 }

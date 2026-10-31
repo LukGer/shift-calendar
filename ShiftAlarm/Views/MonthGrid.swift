@@ -1,13 +1,14 @@
 import SwiftUI
 
 /// A month of Shifts in weeks that start on the locale's first weekday. Swipe sideways or use the arrows to
-/// change month.
+/// change month, and tap a day to open it.
 struct MonthGrid: View {
     let month: Date
     let days: [GridDay]
     let calendar: Calendar
     /// Moves by this many months.
     let showMonth: (Int) -> Void
+    let openDay: (GridDay) -> Void
 
     var body: some View {
         VStack(spacing: 6) {
@@ -33,7 +34,8 @@ struct MonthGrid: View {
                 ForEach(Array(stride(from: 0, to: days.count, by: 7)), id: \.self) { weekStart in
                     GridRow {
                         ForEach(days[weekStart..<weekStart + 7]) { day in
-                            DayCell(day: day)
+                            Button { openDay(day) } label: { DayCell(day: day) }
+                                .buttonStyle(.plain)
                         }
                     }
                 }
@@ -156,7 +158,8 @@ private struct Hatching: Shape {
 
 #Preview("Busy month") {
     MonthGrid(
-        month: .now, days: PreviewRoster(clock: SystemClock()).busyMonth, calendar: .current, showMonth: { _ in })
+        month: .now, days: PreviewRoster(clock: SystemClock()).busyMonth, calendar: .current, showMonth: { _ in },
+        openDay: { _ in })
         .padding()
         .background(Color(.systemGroupedBackground))
 }
