@@ -111,7 +111,27 @@ extension ArmingRunTests {
         #expect(try context.fetchCount(FetchDescriptor<Skip>()) == (isKept ? 1 : 0))
     }
 
+    /// Inside the Arming Window, beyond it, and in another month.
+    @Test(arguments: ["2031-03-03", "2031-03-20", "2031-04-02"])
+    func skippingAndUnSkippingFromTheDaySheetWorksForAnyFutureShift(date: String) async throws {
+        addHerShiftTypes()
+        roster(allDay("td", on: date))
+        let month = String(date.prefix(7))
+
+        try toggleSkip("td", on: date)
+        let skipped = try shifts(in: month, where: \.isSkipped)
+        try toggleSkip("td", on: date)
+
+        #expect(skipped == ["\(date) td"])
+        #expect(try shifts(in: month, where: \.isSkipped) == [])
+    }
+
     // MARK: - Fixtures
+
+    func toggleSkip(_ shortcut: String, on date: String) throws {
+        try container.mainContext.toggleSkip(
+            of: Shift(date: Self.instant("\(date) 00:00"), shiftType: try shiftType(shortcut)))
+    }
 
     func toggleSkip(_ date: String, _ name: String, in result: ArmingResult) throws {
         let shift = try #require(Self.windowShift(on: date, name, in: result))
