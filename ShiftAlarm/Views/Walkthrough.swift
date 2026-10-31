@@ -29,7 +29,7 @@ struct Walkthrough: View {
             WalkthroughPage(
                 symbol: "calendar",
                 title: "Read your calendar",
-                text: "Shifts are all-day events titled with a Shortcut like “td” or “nd”. Nothing is ever written to your calendar.",
+                text: "Shifts are all-day events titled with a Shortcut like “td” or “nd”. Shift Alarm only writes to your calendar when you plan a Shift.",
                 button: "Allow Calendar Access",
                 action: { ask(calendarStore.requestAccess) }
             )
