@@ -58,6 +58,7 @@ struct MonthGrid: View {
 
 private struct DayCell: View {
     let day: GridDay
+    private static let dayNumberHeight: CGFloat = 25
 
     /// Each Shift gets its own tinted part of the day, the first one under the day's number.
     var body: some View {
@@ -80,12 +81,12 @@ private struct DayCell: View {
                 }
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                .background(ShiftTint(shift: shift))
+                .background(ShiftTint(shift: shift, hatchingStartsAt: index == 0 ? Self.dayNumberHeight : 0))
             }
         }
         .frame(maxWidth: .infinity, minHeight: 62)
         .clipShape(.rect(cornerRadius: 8))
-        .overlay(alignment: .topTrailing) {
+        .overlay(alignment: .bottomTrailing) {
             if day.shifts.contains(where: \.hasAlarmArmed) {
                 Image(systemName: "bell.fill")
                     .font(.system(size: 8))
@@ -108,7 +109,7 @@ private struct DayCell: View {
                     Circle().fill(.red)
                 }
             }
-            .padding(.top, 3)
+            .frame(height: Self.dayNumberHeight, alignment: .bottom)
     }
 
     private var accessibilityLabel: String {
@@ -126,12 +127,15 @@ extension GridDay {
 /// A Shift's part of its day: tinted in its Shift Type's colour, or faded and hatched when Skipped.
 private struct ShiftTint: View {
     let shift: GridShift
+    /// Below the day's number, so the stripes never run through it.
+    let hatchingStartsAt: CGFloat
 
     var body: some View {
         let color = shift.shiftType.color
         if shift.isSkipped {
             Hatching()
                 .stroke(color.opacity(0.3), lineWidth: 1.5)
+                .padding(.top, hatchingStartsAt)
                 .background(color.opacity(0.08))
         } else {
             color.opacity(0.2)
