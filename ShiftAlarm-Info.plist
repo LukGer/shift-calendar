@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>NSAlarmKitUsageDescription</key>
-	<string>Shift Alarm rings the alarms for your Shifts, even in silent mode and Focus.</string>
+	<string>Kathlender rings the alarms for your Shifts, even in silent mode and Focus.</string>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
 		<string>dev.lukger.shiftalarm.arm</string>

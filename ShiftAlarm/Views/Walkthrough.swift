@@ -20,7 +20,7 @@ struct Walkthrough: View {
             WalkthroughPage(
                 symbol: "alarm.waves.left.and.right",
                 title: "Alarms that follow your roster",
-                text: "Shift Alarm reads your Shifts from your calendar and sets the right alarms. No more re-setting alarms by hand.",
+                text: "Kathlender reads your Shifts from your calendar and sets the right alarms. No more re-setting alarms by hand.",
                 button: "Get Started",
                 action: showNextPage
             )
@@ -29,7 +29,7 @@ struct Walkthrough: View {
             WalkthroughPage(
                 symbol: "calendar",
                 title: "Read your calendar",
-                text: "Shifts are all-day events titled with a Shortcut like “td” or “nd”. Shift Alarm only writes to your calendar when you plan a Shift.",
+                text: "Shifts are all-day events titled with a Shortcut like “td” or “nd”. Kathlender only writes to your calendar when you plan a Shift.",
                 button: "Allow Calendar Access",
                 action: { ask(calendarStore.requestAccess) }
             )

@@ -193,9 +193,9 @@
 				DEVELOPMENT_TEAM = WUBYBH9K9B;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "ShiftAlarm-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "Shift Alarm";
+				INFOPLIST_KEY_CFBundleDisplayName = "Kathlender";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Shift Alarm finds your Shifts in the calendars you choose. It never changes your calendar.";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Kathlender finds your Shifts in the calendars you choose. It never changes your calendar.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
@@ -218,9 +218,9 @@
 				DEVELOPMENT_TEAM = WUBYBH9K9B;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "ShiftAlarm-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "Shift Alarm";
+				INFOPLIST_KEY_CFBundleDisplayName = "Kathlender";
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Shift Alarm finds your Shifts in the calendars you choose. It never changes your calendar.";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Kathlender finds your Shifts in the calendars you choose. It never changes your calendar.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;

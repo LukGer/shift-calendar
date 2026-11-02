@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Archives Shift Alarm, then exports and uploads it to App Store Connect for TestFlight.
+# Archives Kathlender, then exports and uploads it to App Store Connect for TestFlight.
 #
 # Credentials stay on the dev Mac, outside the repo, in ~/.appstoreconnect/shift-alarm.env:
 #

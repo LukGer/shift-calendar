@@ -11,7 +11,7 @@ struct ArmingBanner: View {
         switch result {
         case .skipped(.calendarNotReadable):
             banner(
-                "Shift Alarm can't read your calendar", systemImage: "calendar.badge.exclamationmark",
+                "Kathlender can't read your calendar", systemImage: "calendar.badge.exclamationmark",
                 text: "Your alarms stay as they were. Allow full calendar access in Settings.",
                 opensSettings: true)
         case .skipped(.chosenCalendarMissing):
@@ -20,18 +20,18 @@ struct ArmingBanner: View {
                 text: "Your alarms stay as they were. Choose the calendars that hold your Shifts again.")
         case .skipped(.alarmsNotAllowed):
             banner(
-                "Shift Alarm isn't allowed to set alarms", systemImage: "alarm",
+                "Kathlender isn't allowed to set alarms", systemImage: "alarm",
                 text: "Your alarms stay as they were. Allow alarms in Settings.",
                 opensSettings: true)
         case .failed:
             banner(
                 "Alarms couldn't be armed", systemImage: "exclamationmark.triangle",
-                text: "Alarms already armed still ring. Shift Alarm tries again the next time you open it.")
+                text: "Alarms already armed still ring. Kathlender tries again the next time you open it.")
         case .armed, nil:
             if notificationPermission == .denied {
                 banner(
                     "Notifications off", systemImage: "bell.slash",
-                    text: "If your alarms stop being armed, Shift Alarm can't warn you. Allow notifications in Settings.",
+                    text: "If your alarms stop being armed, Kathlender can't warn you. Allow notifications in Settings.",
                     opensSettings: true)
             }
         }

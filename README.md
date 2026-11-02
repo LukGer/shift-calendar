@@ -1,4 +1,4 @@
-# Shift Alarm
+# Kathlender
 
 An iOS 26 iPhone app that keeps alarms armed for the Shifts in her calendar. See [GLOSSARY.md](GLOSSARY.md) for the domain language.
 

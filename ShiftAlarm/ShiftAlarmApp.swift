@@ -10,7 +10,7 @@ struct ShiftAlarmApp: App {
                     .environment(Arming.shared)
             } else {
                 ContentUnavailableView(
-                    "Shift Alarm can't open its data",
+                    "Kathlender can't open its data",
                     systemImage: "exclamationmark.triangle",
                     description: Text("Quit and reopen the app.")
                 )
