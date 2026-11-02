@@ -20,11 +20,7 @@ struct AlarmKitScheduler: AlarmScheduler {
     }
 
     func schedule(_ alarm: WantedAlarm) async throws {
-        // The stopButton initializer is the one available on iOS 26.0; from 26.1 the system ignores the button.
-        let alert = AlarmPresentation.Alert(
-            title: LocalizedStringResource(stringLiteral: alarm.title),
-            stopButton: AlarmButton(text: "Stop", textColor: .white, systemImageName: "stop.circle")
-        )
+        let alert = AlarmPresentation.Alert(title: LocalizedStringResource(stringLiteral: alarm.title))
         let attributes = AlarmAttributes<ShiftAlarmMetadata>(
             presentation: AlarmPresentation(alert: alert),
             tintColor: alarm.tint

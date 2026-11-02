@@ -823,16 +823,6 @@
         }
       }
     },
-    "Stop": {
-      "localizations": {
-        "de": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Stopp"
-          }
-        }
-      }
-    },
     "These all-day event titles match no Shift Type, so they ring nothing.": {
       "localizations": {
         "de": {

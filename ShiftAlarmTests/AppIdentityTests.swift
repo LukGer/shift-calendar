@@ -6,7 +6,7 @@ struct AppIdentityTests {
     @Test(arguments: [
         ("CFBundleIdentifier", "dev.lukger.shiftalarm"),
         ("CFBundleDisplayName", "Kathlender"),
-        ("MinimumOSVersion", "26.0"),
+        ("MinimumOSVersion", "26.1"),
         ("NSCalendarsFullAccessUsageDescription", "Kathlender finds your Shifts in the calendars you choose. It only writes to your calendar when you plan a Shift."),
         ("NSAlarmKitUsageDescription", "Kathlender rings the alarms for your Shifts, even in silent mode and Focus."),
     ])
