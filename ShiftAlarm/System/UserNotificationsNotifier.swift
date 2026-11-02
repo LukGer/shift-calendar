@@ -19,7 +19,7 @@ struct UserNotificationsNotifier: Notifier {
     func replaceStaleArmingNotification(firingAt date: Date) async {
         let content = UNMutableNotificationContent()
         content.title = "Kathlender"
-        content.body = "Your shift alarms may be out of date. Tap to check."
+        content.body = String(localized: "Your shift alarms may be out of date. Tap to check.")
         content.sound = .default
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: max(1, date.timeIntervalSinceNow), repeats: false)
         center.removeDeliveredNotifications(withIdentifiers: [Self.staleArmingIdentifier])

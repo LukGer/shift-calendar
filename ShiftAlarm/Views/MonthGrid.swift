@@ -1,23 +1,75 @@
 import SwiftUI
 
-/// A month of Shifts in weeks that start on the locale's first weekday. Swipe sideways or use the arrows to
-/// change month, and tap a day to open it.
-struct MonthGrid: View {
+/// Months of Shifts in weeks that start on the locale's first weekday. Swipe sideways or use the arrows to
+/// change month, and tap a day for what she can do with it.
+struct MonthGrid<DayMenu: View>: View {
+    /// The first day of the month on screen.
+    @Binding var month: Date
+    /// The month on screen and its neighbours, keyed by their first day.
+    let daysByMonth: [Date: [GridDay]]
+    let calendar: Calendar
+    @ViewBuilder let dayMenu: (GridDay) -> DayMenu
+    /// Months have five or six weeks, so the pager takes the height of the month on screen.
+    @State private var heights: [Date: CGFloat] = [:]
+
+    var body: some View {
+        ScrollView(.horizontal) {
+            LazyHStack(alignment: .top, spacing: 0) {
+                ForEach(months, id: \.self) { page in
+                    MonthPage(
+                        month: page, days: daysByMonth[page] ?? [], calendar: calendar, show: show, dayMenu: dayMenu)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .onGeometryChange(for: CGFloat.self, of: \.size.height) { heights[page] = $0 }
+                        .padding(.horizontal)
+                        .containerRelativeFrame(.horizontal)
+                }
+            }
+            .scrollTargetLayout()
+        }
+        .scrollTargetBehavior(.viewAligned(limitBehavior: .alwaysByOne))
+        .scrollPosition(id: Binding { month } set: { if let page = $0 { month = page } })
+        .scrollIndicators(.hidden)
+        .frame(height: heights[month])
+        .animation(.smooth, value: heights[month])
+        .sensoryFeedback(.selection, trigger: month)
+    }
+
+    private var thisMonth: Date {
+        calendar.dateInterval(of: .month, for: .now)!.start
+    }
+
+    /// Ten years either side of this month.
+    private var months: [Date] {
+        (-120...120).map { calendar.date(byAdding: .month, value: $0, to: thisMonth)! }
+    }
+
+    /// Scrolls `months` away from the month on screen, or back to this month when nil.
+    private func show(_ months: Int?) {
+        withAnimation(.smooth) {
+            month = months.map { calendar.date(byAdding: .month, value: $0, to: month)! } ?? thisMonth
+        }
+    }
+}
+
+private struct MonthPage<DayMenu: View>: View {
     let month: Date
     let days: [GridDay]
     let calendar: Calendar
-    let moveMonth: (_ months: Int) -> Void
-    let openDay: (GridDay) -> Void
+    let show: (_ months: Int?) -> Void
+    let dayMenu: (GridDay) -> DayMenu
 
     var body: some View {
         VStack(spacing: 6) {
-            HStack {
-                Text(month, format: .dateTime.month(.wide).year())
-                    .font(.title3.bold())
+            HStack(spacing: 12) {
+                Button { show(nil) } label: {
+                    Text(month, format: .dateTime.month(.wide).year())
+                        .font(.title3.bold())
+                }
+                .buttonStyle(.plain)
+                .accessibilityHint("Shows this month")
                 Spacer()
-                Button("Previous month", systemImage: "chevron.left") { moveMonth(-1) }
-                    .padding(.trailing, 12)
-                Button("Next month", systemImage: "chevron.right") { moveMonth(1) }
+                Button("Previous month", systemImage: "chevron.left") { show(-1) }
+                Button("Next month", systemImage: "chevron.right") { show(1) }
             }
             .labelStyle(.iconOnly)
             .padding(.bottom, 4)
@@ -33,8 +85,10 @@ struct MonthGrid: View {
                 ForEach(Array(stride(from: 0, to: days.count, by: 7)), id: \.self) { weekStart in
                     GridRow {
                         ForEach(days[weekStart..<weekStart + 7]) { day in
-                            Button { openDay(day) } label: { DayCell(day: day) }
+                            Menu { dayMenu(day) } label: { DayCell(day: day) }
+                                .menuStyle(.button)
                                 .buttonStyle(.plain)
+                                .menuOrder(.fixed)
                         }
                     }
                 }
@@ -42,11 +96,6 @@ struct MonthGrid: View {
         }
         .padding(12)
         .background(.background, in: .rect(cornerRadius: 20))
-        .simultaneousGesture(DragGesture(minimumDistance: 30).onEnded { drag in
-            let width = drag.translation.width
-            guard abs(width) > abs(drag.translation.height) else { return }
-            moveMonth(width < 0 ? 1 : -1)
-        })
     }
 
     private var weekdaySymbols: [String] {
@@ -56,45 +105,28 @@ struct MonthGrid: View {
     }
 }
 
+/// The day's number, then its Shifts sharing the space below it. A Shift slides in from the bottom when it's planned.
 private struct DayCell: View {
     let day: GridDay
-    private static let dayNumberHeight: CGFloat = 25
 
-    /// Each Shift gets its own tinted part of the day, the first one under the day's number.
     var body: some View {
-        VStack(spacing: 0) {
-            if day.shifts.isEmpty {
-                dayNumber
-                    .frame(maxHeight: .infinity, alignment: .top)
-            }
-            ForEach(Array(day.shifts.enumerated()), id: \.element.shiftType.id) { index, shift in
-                VStack(spacing: 1) {
-                    if index == 0 {
-                        dayNumber
-                    }
-                    Text(shift.shiftType.shortcut)
-                        .font(.caption.bold())
-                        .foregroundStyle(shift.isSkipped ? AnyShapeStyle(.secondary) : AnyShapeStyle(shift.shiftType.color))
-                        .strikethrough(shift.isSkipped)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
+        VStack(spacing: 2) {
+            dayNumber
+            VStack(spacing: 0) {
+                ForEach(day.shifts, id: \.shiftType.id) { shift in
+                    ShiftTile(shift: shift)
+                        .transition(.move(edge: .bottom))
                 }
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                .background(ShiftTint(shift: shift, hatchingStartsAt: index == 0 ? Self.dayNumberHeight : 0))
             }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .clipShape(.rect(cornerRadius: 5))
         }
+        .padding([.horizontal, .bottom], 3)
         .frame(maxWidth: .infinity, minHeight: 62)
-        .clipShape(.rect(cornerRadius: 8))
-        .overlay(alignment: .bottomTrailing) {
-            if day.shifts.contains(where: \.hasAlarmArmed) {
-                Image(systemName: "bell.fill")
-                    .font(.system(size: 8))
-                    .foregroundStyle(.secondary)
-                    .padding(4)
-            }
-        }
+        .background(RoundedRectangle(cornerRadius: 8).strokeBorder(.quaternary, lineWidth: 0.5))
+        .contentShape(.rect)
         .opacity(day.isInMonth ? 1 : 0.4)
+        .animation(.snappy, value: day.shifts)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityLabel)
     }
@@ -109,7 +141,7 @@ private struct DayCell: View {
                     Circle().fill(.red)
                 }
             }
-            .frame(height: Self.dayNumberHeight, alignment: .bottom)
+            .frame(height: 25, alignment: .bottom)
     }
 
     private var accessibilityLabel: String {
@@ -124,43 +156,30 @@ extension GridDay {
     }
 }
 
-/// A Shift's part of its day: tinted in its Shift Type's colour, or faded and hatched when Skipped.
-private struct ShiftTint: View {
+/// A Shift's Shortcut on its Shift Type's colour. Stripes sweep in when it's Skipped.
+private struct ShiftTile: View {
     let shift: GridShift
-    /// Below the day's number, so the stripes never run through it.
-    let hatchingStartsAt: CGFloat
 
     var body: some View {
         let color = shift.shiftType.color
-        if shift.isSkipped {
-            Hatching()
-                .stroke(color.opacity(0.3), lineWidth: 1.5)
-                .padding(.top, hatchingStartsAt)
-                .background(color.opacity(0.08))
-        } else {
-            color.opacity(0.2)
-        }
-    }
-}
-
-private struct Hatching: Shape {
-    func path(in rect: CGRect) -> Path {
-        var path = Path()
-        let spacing: CGFloat = 6
-        var x = rect.minX - rect.height
-        while x < rect.maxX {
-            path.move(to: CGPoint(x: x, y: rect.maxY))
-            path.addLine(to: CGPoint(x: x + rect.height, y: rect.minY))
-            x += spacing
-        }
-        return path
+        Text(shift.shiftType.shortcut)
+            .font(.caption.bold())
+            .foregroundStyle(color)
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background {
+                color.opacity(shift.isSkipped ? 0.08 : 0.2)
+                Hatching(progress: shift.isSkipped ? 1 : 0)
+                    .stroke(color.opacity(0.3), lineWidth: 1.5)
+            }
     }
 }
 
 #Preview("Busy month") {
-    MonthGrid(
-        month: .now, days: PreviewCalendarStore.busyMonth, calendar: .current, moveMonth: { _ in },
-        openDay: { _ in })
-        .padding()
-        .background(Color(.systemGroupedBackground))
+    @Previewable @State var month = Calendar.current.dateInterval(of: .month, for: .now)!.start
+    MonthGrid(month: $month, daysByMonth: [month: PreviewCalendarStore.busyMonth], calendar: .current) { day in
+        Text(day.title)
+    }
+    .background(Color(.systemGroupedBackground))
 }

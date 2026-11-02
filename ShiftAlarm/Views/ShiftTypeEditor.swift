@@ -47,7 +47,9 @@ struct ShiftTypeEditor: View {
                 }
                 .onDelete { alarms.remove(atOffsets: $0) }
                 Button("Add Alarm", systemImage: "plus") {
-                    alarms.append(EditableAlarm(AlarmTime(hour: 6, minute: 0)))
+                    withAnimation {
+                        alarms.append(EditableAlarm(AlarmTime(hour: 6, minute: 0)))
+                    }
                 }
             } header: {
                 Text("Alarm Set")
@@ -61,7 +63,7 @@ struct ShiftTypeEditor: View {
                 }
             }
         }
-        .navigationTitle(name.trimmed.isEmpty ? "New Shift Type" : name.trimmed)
+        .navigationTitle(name.trimmed.isEmpty ? String(localized: "New Shift Type") : name.trimmed)
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save", action: save)
@@ -74,8 +76,10 @@ struct ShiftTypeEditor: View {
         if isShortcutTaken {
             Text("Another Shift Type already uses “\(shortcut.trimmed)”.")
                 .foregroundStyle(.red)
+        } else if !shortcut.trimmed.isEmpty && name.trimmed.isEmpty {
+            Text("All-day events titled “\(shortcut.trimmed)”, in any case, in your chosen calendars become these Shifts.")
         } else if !shortcut.trimmed.isEmpty {
-            Text("All-day events titled “\(shortcut.trimmed)”, in any case, in your chosen calendars become \(name.trimmed.isEmpty ? "these" : name.trimmed) Shifts.")
+            Text("All-day events titled “\(shortcut.trimmed)”, in any case, in your chosen calendars become \(name.trimmed) Shifts.")
         }
     }
 

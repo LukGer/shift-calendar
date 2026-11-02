@@ -1,7 +1,7 @@
 import Foundation
 
 /// A day of the month grid on Home.
-struct GridDay: Identifiable {
+struct GridDay: Identifiable, Equatable {
     let date: Date
     /// False for the leading and trailing days that fill the first and last weeks.
     let isInMonth: Bool
@@ -14,10 +14,9 @@ struct GridDay: Identifiable {
 }
 
 /// A Shift as the month grid shows it.
-struct GridShift {
+struct GridShift: Equatable {
     let shiftType: ShiftType
     let isSkipped: Bool
-    let hasAlarmArmed: Bool
     /// Past, or behind a multi-day or recurring event or one in a calendar she can't edit:
     /// Planning leaves it alone.
     let isLocked: Bool
@@ -48,14 +47,9 @@ extension CalendarStore {
                 isToday: date == armingWindow.lowerBound,
                 isPast: date < armingWindow.lowerBound,
                 shifts: (shiftsByDate[date] ?? []).map { shiftInCalendar in
-                    let shift = shiftInCalendar.shift
-                    let isSkipped = shift.isSkipped(by: skips)
-                    return GridShift(
-                        shiftType: shift.shiftType,
-                        isSkipped: isSkipped,
-                        hasAlarmArmed: !isSkipped && !shift.alarmInstants(
-                            after: clock.now, through: armingWindow.upperBound, calendar: calendar
-                        ).isEmpty,
+                    GridShift(
+                        shiftType: shiftInCalendar.shift.shiftType,
+                        isSkipped: shiftInCalendar.shift.isSkipped(by: skips),
                         isLocked: shiftInCalendar.isLocked
                     )
                 }

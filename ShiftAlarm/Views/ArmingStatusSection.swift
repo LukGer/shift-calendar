@@ -10,8 +10,8 @@ struct ArmingStatusSection: View {
 
     var body: some View {
         Section("Status") {
-            LabeledContent("Calendar access", value: EventKitCalendarStore().hasFullAccess ? "Allowed" : "Not allowed")
-            LabeledContent("Alarms", value: AlarmKitScheduler().isAuthorized ? "Allowed" : "Not allowed")
+            LabeledContent("Calendar access", value: allowed(EventKitCalendarStore().hasFullAccess))
+            LabeledContent("Alarms", value: allowed(AlarmKitScheduler().isAuthorized))
             LabeledContent("Notifications", value: notificationsValue)
             LabeledContent("Last armed") {
                 if let lastArmed = records.first?.lastArmed {
@@ -23,11 +23,15 @@ struct ArmingStatusSection: View {
         }
     }
 
+    private func allowed(_ isAllowed: Bool) -> String {
+        isAllowed ? String(localized: "Allowed") : String(localized: "Not allowed")
+    }
+
     private var notificationsValue: String {
         switch notificationPermission {
-        case .allowed: "Allowed"
-        case .notAsked: "Not asked"
-        case .denied: "Off"
+        case .allowed: allowed(true)
+        case .notAsked: String(localized: "Not asked")
+        case .denied: String(localized: "Off")
         case nil: ""
         }
     }

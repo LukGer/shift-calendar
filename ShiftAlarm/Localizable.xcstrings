@@ -1,0 +1,972 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "%@ · %@": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · %@"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$@ · %2$@"
+          }
+        }
+      }
+    },
+    "A chosen calendar can't be found": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ein ausgewählter Kalender fehlt"
+          }
+        }
+      }
+    },
+    "A future day": {
+      "comment": "Preview only",
+      "shouldTranslate": false
+    },
+    "A locked Shift": {
+      "comment": "Preview only",
+      "shouldTranslate": false
+    },
+    "A past day": {
+      "comment": "Preview only",
+      "shouldTranslate": false
+    },
+    "Add": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hinzufügen"
+          }
+        }
+      }
+    },
+    "Add Alarm": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wecker hinzufügen"
+          }
+        }
+      }
+    },
+    "Add Shift Type": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dienstart hinzufügen"
+          }
+        }
+      }
+    },
+    "Alarm": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wecker"
+          }
+        }
+      }
+    },
+    "Alarm Set": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weckzeiten"
+          }
+        }
+      }
+    },
+    "Alarms": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wecker"
+          }
+        }
+      }
+    },
+    "Alarms already armed still ring. Kathlender tries again the next time you open it.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bereits gestellte Wecker klingeln weiterhin. Kathlender versucht es beim nächsten Öffnen erneut."
+          }
+        }
+      }
+    },
+    "Alarms couldn't be armed": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wecker konnten nicht gestellt werden"
+          }
+        }
+      }
+    },
+    "Alarms ring through silent mode and Focus, even when this app is closed.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wecker klingeln auch im Stummmodus und bei aktivem Fokus, selbst wenn die App geschlossen ist."
+          }
+        }
+      }
+    },
+    "Alarms that follow your roster": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wecker, die deinem Dienstplan folgen"
+          }
+        }
+      }
+    },
+    "All-day events titled “%@”, in any case, in your chosen calendars become %@ Shifts.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ganztägige Termine mit dem Titel „%1$@“ in deinen ausgewählten Kalendern werden als %2$@ erkannt, egal in welcher Schreibweise."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "new",
+            "value": "All-day events titled “%1$@”, in any case, in your chosen calendars become %2$@ Shifts."
+          }
+        }
+      }
+    },
+    "All-day events titled “%@”, in any case, in your chosen calendars become these Shifts.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ganztägige Termine mit dem Titel „%@“ in deinen ausgewählten Kalendern werden als diese Dienste erkannt, egal in welcher Schreibweise."
+          }
+        }
+      }
+    },
+    "Allow Alarms": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wecker erlauben"
+          }
+        }
+      }
+    },
+    "Allow Calendar Access": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kalenderzugriff erlauben"
+          }
+        }
+      }
+    },
+    "Allow Notifications": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mitteilungen erlauben"
+          }
+        }
+      }
+    },
+    "Allowed": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erlaubt"
+          }
+        }
+      }
+    },
+    "Another Shift Type already uses “%@”.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Eine andere Dienstart verwendet bereits „%@“."
+          }
+        }
+      }
+    },
+    "Arm Shifts": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dienstwecker stellen"
+          }
+        }
+      }
+    },
+    "Arms the alarms for your upcoming Shifts.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stellt die Wecker für deine nächsten Dienste."
+          }
+        }
+      }
+    },
+    "Calendar access": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kalenderzugriff"
+          }
+        }
+      }
+    },
+    "Calendars": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kalender"
+          }
+        }
+      }
+    },
+    "Choose a calendar you can edit in Settings.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wähle in den Einstellungen einen Kalender, den du bearbeiten kannst."
+          }
+        }
+      }
+    },
+    "Choose the calendars your roster is in.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wähle die Kalender, in denen dein Dienstplan steht."
+          }
+        }
+      }
+    },
+    "Colour": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Farbe"
+          }
+        }
+      }
+    },
+    "Couldn't change your calendar.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dein Kalender konnte nicht geändert werden."
+          }
+        }
+      }
+    },
+    "Days without a Shift ring nothing.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "An Tagen ohne Dienst klingelt nichts."
+          }
+        }
+      }
+    },
+    "Delete Shift Type": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dienstart löschen"
+          }
+        }
+      }
+    },
+    "Done": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fertig"
+          }
+        }
+      }
+    },
+    "Edit Shift Types": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dienstarten bearbeiten"
+          }
+        }
+      }
+    },
+    "Edit in Calendar": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Im Kalender bearbeiten"
+          }
+        }
+      }
+    },
+    "Get Started": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los geht’s"
+          }
+        }
+      }
+    },
+    "Hear when alarms go stale": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Erfahre, wenn Wecker veralten"
+          }
+        }
+      }
+    },
+    "If your alarms haven't been updated for two days, a notification tells you before an old alarm makes you late.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wurden deine Wecker zwei Tage lang nicht aktualisiert, warnt dich eine Mitteilung, bevor ein alter Wecker dich zu spät kommen lässt."
+          }
+        }
+      }
+    },
+    "If your alarms stop being armed, Kathlender can't warn you. Allow notifications in Settings.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Falls deine Wecker nicht mehr gestellt werden, kann Kathlender dich nicht warnen. Erlaube Mitteilungen in den Einstellungen."
+          }
+        }
+      }
+    },
+    "Kathlender can't open its data": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kathlender kann seine Daten nicht öffnen"
+          }
+        }
+      }
+    },
+    "Kathlender can't read your calendar": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kathlender kann deinen Kalender nicht lesen"
+          }
+        }
+      }
+    },
+    "Kathlender isn't allowed to set alarms": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kathlender darf keine Wecker stellen"
+          }
+        }
+      }
+    },
+    "Kathlender reads your Shifts from your calendar and sets the right alarms. No more re-setting alarms by hand.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kathlender liest deine Dienste aus deinem Kalender und stellt die passenden Wecker. Nie wieder Wecker von Hand umstellen."
+          }
+        }
+      }
+    },
+    "Last armed": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zuletzt gestellt"
+          }
+        }
+      }
+    },
+    "Name": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Name"
+          }
+        }
+      }
+    },
+    "Name your Shortcuts": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Benenne deine Kürzel"
+          }
+        }
+      }
+    },
+    "Never": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nie"
+          }
+        }
+      }
+    },
+    "New Shift Type": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neue Dienstart"
+          }
+        }
+      }
+    },
+    "New Shifts go into": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Neue Dienste in"
+          }
+        }
+      }
+    },
+    "Next": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weiter"
+          }
+        }
+      }
+    },
+    "Next month": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nächster Monat"
+          }
+        }
+      }
+    },
+    "No Planning Calendar": {
+      "comment": "Preview only",
+      "shouldTranslate": false
+    },
+    "No Shift Types": {
+      "comment": "Preview only",
+      "shouldTranslate": false
+    },
+    "No Shifts this week": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Woche keine Dienste"
+          }
+        }
+      }
+    },
+    "Not a Shift Type": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keine Dienstart"
+          }
+        }
+      }
+    },
+    "Not allowed": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nicht erlaubt"
+          }
+        }
+      }
+    },
+    "Not asked": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nicht gefragt"
+          }
+        }
+      }
+    },
+    "Notifications": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mitteilungen"
+          }
+        }
+      }
+    },
+    "Notifications off": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mitteilungen aus"
+          }
+        }
+      }
+    },
+    "Off": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aus"
+          }
+        }
+      }
+    },
+    "Open Settings": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Einstellungen öffnen"
+          }
+        }
+      }
+    },
+    "Past days can't be changed.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vergangene Tage können nicht geändert werden."
+          }
+        }
+      }
+    },
+    "Previous month": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vorheriger Monat"
+          }
+        }
+      }
+    },
+    "Quit and reopen the app.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beende die App und öffne sie erneut."
+          }
+        }
+      }
+    },
+    "Read your calendar": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deinen Kalender lesen"
+          }
+        }
+      }
+    },
+    "Ring": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klingeln"
+          }
+        }
+      }
+    },
+    "Ring for this Shift": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Für diesen Dienst klingeln"
+          }
+        }
+      }
+    },
+    "Ring like the Clock app": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klingeln wie die Uhr-App"
+          }
+        }
+      }
+    },
+    "Rings nothing": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klingelt nicht"
+          }
+        }
+      }
+    },
+    "Rings on the Shift's date. Leave empty to ring nothing.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klingelt am Tag des Dienstes. Leer lassen, damit nichts klingelt."
+          }
+        }
+      }
+    },
+    "Save": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sichern"
+          }
+        }
+      }
+    },
+    "Set up your Shift Types in Settings to plan Shifts.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Richte deine Dienstarten in den Einstellungen ein, um Dienste zu planen."
+          }
+        }
+      }
+    },
+    "Settings": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Einstellungen"
+          }
+        }
+      }
+    },
+    "Shift Types": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dienstarten"
+          }
+        }
+      }
+    },
+    "Shifts": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dienste"
+          }
+        }
+      }
+    },
+    "Shifts are all-day events titled with a Shortcut like “td” or “nd”. Kathlender only writes to your calendar when you plan a Shift.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dienste sind ganztägige Termine mit einem Kürzel wie „td“ oder „nd“ als Titel. Kathlender schreibt nur in deinen Kalender, wenn du einen Dienst planst."
+          }
+        }
+      }
+    },
+    "Shifts are read from all-day events in these calendars.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dienste werden aus ganztägigen Terminen in diesen Kalendern gelesen."
+          }
+        }
+      }
+    },
+    "Shifts you plan on a day are written into this calendar.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dienste, die du an einem Tag planst, werden in diesen Kalender geschrieben."
+          }
+        }
+      }
+    },
+    "Shortcut": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kürzel"
+          }
+        }
+      }
+    },
+    "Shows this month": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zeigt den aktuellen Monat"
+          }
+        }
+      }
+    },
+    "Skip": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aussetzen"
+          }
+        }
+      }
+    },
+    "Skip Shift": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dienst aussetzen"
+          }
+        }
+      }
+    },
+    "Skip this Shift": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diesen Dienst aussetzen"
+          }
+        }
+      }
+    },
+    "Status": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Status"
+          }
+        }
+      }
+    },
+    "Stop": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stopp"
+          }
+        }
+      }
+    },
+    "These all-day event titles match no Shift Type, so they ring nothing.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese Titel ganztägiger Termine passen zu keiner Dienstart, daher klingelt für sie nichts."
+          }
+        }
+      }
+    },
+    "These all-day titles are in your chosen calendars. Name each one that is a Shift, and leave days off like “U” empty. Set their alarms later in Settings.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diese ganztägigen Titel stehen in deinen ausgewählten Kalendern. Benenne jeden, der ein Dienst ist, und lass freie Tage wie „U“ leer. Ihre Wecker stellst du später in den Einstellungen ein."
+          }
+        }
+      }
+    },
+    "This Shift can only be changed in the Calendar app.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dieser Dienst kann nur in der Kalender-App geändert werden."
+          }
+        }
+      }
+    },
+    "This Shift is already on this day.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dieser Dienst ist an diesem Tag schon eingetragen."
+          }
+        }
+      }
+    },
+    "Today": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Heute"
+          }
+        }
+      }
+    },
+    "Tomorrow": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Morgen"
+          }
+        }
+      }
+    },
+    "Where are your Shifts?": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Wo stehen deine Dienste?"
+          }
+        }
+      }
+    },
+    "Your alarms stay as they were. Allow alarms in Settings.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine Wecker bleiben, wie sie sind. Erlaube Wecker in den Einstellungen."
+          }
+        }
+      }
+    },
+    "Your alarms stay as they were. Allow full calendar access in Settings.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine Wecker bleiben, wie sie sind. Erlaube vollen Kalenderzugriff in den Einstellungen."
+          }
+        }
+      }
+    },
+    "Your alarms stay as they were. Choose the calendars that hold your Shifts again.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine Wecker bleiben, wie sie sind. Wähle die Kalender mit deinen Diensten erneut aus."
+          }
+        }
+      }
+    },
+    "Your chosen calendars have no all-day events yet. Add Shift Types later in Settings.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine ausgewählten Kalender enthalten noch keine ganztägigen Termine. Füge Dienstarten später in den Einstellungen hinzu."
+          }
+        }
+      }
+    },
+    "Your shift alarms may be out of date. Tap to check.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Deine Dienstwecker sind vielleicht veraltet. Tippe zum Prüfen."
+          }
+        }
+      }
+    },
+    "e.g. Tagdienst": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "z. B. Tagdienst"
+          }
+        }
+      }
+    },
+    "td": {
+      "comment": "An example Shortcut, the same in every language",
+      "shouldTranslate": false
+    }
+  },
+  "version": "1.0"
+}

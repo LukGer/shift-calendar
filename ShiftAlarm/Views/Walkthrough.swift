@@ -127,9 +127,9 @@ struct Walkthrough: View {
 
 private struct WalkthroughPage<Extra: View>: View {
     let symbol: String
-    let title: String
-    let text: String
-    let button: String
+    let title: LocalizedStringKey
+    let text: LocalizedStringKey
+    let button: LocalizedStringKey
     let action: () -> Void
     @ViewBuilder var extra: Extra
 
@@ -167,7 +167,10 @@ private struct WalkthroughPage<Extra: View>: View {
 }
 
 extension WalkthroughPage where Extra == EmptyView {
-    init(symbol: String, title: String, text: String, button: String, action: @escaping () -> Void) {
+    init(
+        symbol: String, title: LocalizedStringKey, text: LocalizedStringKey, button: LocalizedStringKey,
+        action: @escaping () -> Void
+    ) {
         self.init(symbol: symbol, title: title, text: text, button: button, action: action) { EmptyView() }
     }
 }

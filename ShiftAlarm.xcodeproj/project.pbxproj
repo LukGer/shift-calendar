@@ -22,8 +22,16 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		AA0000000000000000000010 /* ShiftAlarm */ = {isa = PBXFileSystemSynchronizedRootGroup; path = ShiftAlarm; sourceTree = "<group>"; };
-		AA0000000000000000000110 /* ShiftAlarmTests */ = {isa = PBXFileSystemSynchronizedRootGroup; path = ShiftAlarmTests; sourceTree = "<group>"; };
+		AA0000000000000000000010 /* ShiftAlarm */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ShiftAlarm;
+			sourceTree = "<group>";
+		};
+		AA0000000000000000000110 /* ShiftAlarmTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = ShiftAlarmTests;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -127,6 +135,7 @@
 			knownRegions = (
 				en,
 				Base,
+				de,
 			);
 			mainGroup = AA0000000000000000000030;
 			minimizedProjectReferenceProxies = 1;
@@ -193,9 +202,9 @@
 				DEVELOPMENT_TEAM = WUBYBH9K9B;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "ShiftAlarm-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "Kathlender";
+				INFOPLIST_KEY_CFBundleDisplayName = Kathlender;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Kathlender finds your Shifts in the calendars you choose. It never changes your calendar.";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Kathlender finds your Shifts in the calendars you choose. It only writes to your calendar when you plan a Shift.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
@@ -218,9 +227,9 @@
 				DEVELOPMENT_TEAM = WUBYBH9K9B;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "ShiftAlarm-Info.plist";
-				INFOPLIST_KEY_CFBundleDisplayName = "Kathlender";
+				INFOPLIST_KEY_CFBundleDisplayName = Kathlender;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
-				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Kathlender finds your Shifts in the calendars you choose. It never changes your calendar.";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "Kathlender finds your Shifts in the calendars you choose. It only writes to your calendar when you plan a Shift.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
@@ -231,6 +240,36 @@
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Release;
+		};
+		AA0000000000000000000071 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		AA0000000000000000000072 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
 		};
@@ -266,32 +305,6 @@
 			};
 			name = Release;
 		};
-		AA0000000000000000000071 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				DEBUG_INFORMATION_FORMAT = dwarf;
-				ENABLE_TESTABILITY = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				ONLY_ACTIVE_ARCH = YES;
-				SDKROOT = iphoneos;
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
-				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
-			};
-			name = Debug;
-		};
-		AA0000000000000000000072 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ALWAYS_SEARCH_USER_PATHS = NO;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
-				SDKROOT = iphoneos;
-				SWIFT_COMPILATION_MODE = wholemodule;
-				VALIDATE_PRODUCT = YES;
-			};
-			name = Release;
-		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -304,20 +317,20 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		AA0000000000000000000160 /* Build configuration list for PBXNativeTarget "ShiftAlarmTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				AA0000000000000000000161 /* Debug */,
-				AA0000000000000000000162 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		AA0000000000000000000070 /* Build configuration list for PBXProject "ShiftAlarm" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				AA0000000000000000000071 /* Debug */,
 				AA0000000000000000000072 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AA0000000000000000000160 /* Build configuration list for PBXNativeTarget "ShiftAlarmTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AA0000000000000000000161 /* Debug */,
+				AA0000000000000000000162 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

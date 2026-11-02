@@ -37,7 +37,9 @@ struct ArmingBanner: View {
         }
     }
 
-    private func banner(_ title: String, systemImage: String, text: String, opensSettings: Bool = false) -> some View {
+    private func banner(
+        _ title: LocalizedStringKey, systemImage: String, text: LocalizedStringKey, opensSettings: Bool = false
+    ) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Label(title, systemImage: systemImage)
                 .font(.headline)

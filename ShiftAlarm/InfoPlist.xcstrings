@@ -1,0 +1,40 @@
+{
+  "sourceLanguage": "en",
+  "strings": {
+    "NSAlarmKitUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kathlender lässt die Wecker für deine Dienste klingeln, auch im Stummmodus und bei aktivem Fokus."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kathlender rings the alarms for your Shifts, even in silent mode and Focus."
+          }
+        }
+      }
+    },
+    "NSCalendarsFullAccessUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kathlender findet deine Dienste in den Kalendern, die du auswählst. Es schreibt nur in deinen Kalender, wenn du einen Dienst planst."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kathlender finds your Shifts in the calendars you choose. It only writes to your calendar when you plan a Shift."
+          }
+        }
+      }
+    }
+  },
+  "version": "1.0"
+}

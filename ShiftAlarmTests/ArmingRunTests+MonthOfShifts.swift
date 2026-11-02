@@ -103,31 +103,6 @@ extension ArmingRunTests {
         #expect(try shifts(in: "2031-03", where: \.isSkipped) == expected)
     }
 
-    /// The Arming Window ends 7 days after "now": at 2031-03-09 20:00, or at 2031-03-09 04:00 from 2031-03-02 04:00.
-    @Test(arguments: [
-        ("2031-03-02 20:00", "2031-03-03", "td", false, true),
-        ("2031-03-02 20:00", "2031-03-02", "td", false, false),
-        ("2031-03-02 04:00", "2031-03-02", "td", false, true),
-        ("2031-03-02 20:00", "2031-03-09", "nd", false, true),
-        ("2031-03-02 04:00", "2031-03-09", "td", false, false),
-        ("2031-03-02 20:00", "2031-03-10", "td", false, false),
-        ("2031-03-02 20:00", "2031-03-01", "td", false, false),
-        ("2031-03-02 20:00", "2031-03-03", "e6", false, false),
-        ("2031-03-02 20:00", "2031-03-03", "td", true, false),
-    ])
-    func aShiftIsMarkedArmedOnlyWhenArmingArmsOneOfItsAlarms(
-        now: String, date: String, shortcut: String, isSkipped: Bool, isArmed: Bool
-    ) throws {
-        clock.now = Self.instant(now)
-        addHerShiftTypes()
-        roster(allDay(shortcut, on: date))
-        if isSkipped {
-            try toggleSkip(shortcut, on: date)
-        }
-
-        #expect(try shifts(in: "2031-03", where: \.hasAlarmArmed) == (isArmed ? ["\(date) \(shortcut)"] : []))
-    }
-
     enum EventsBehindAShift: CaseIterable {
         case aSingleDayEventAhead, aSingleDayEventToday, twoSingleDayEvents
         case aPastEvent, aMultiDayEvent, aRecurringEvent, anEventInACalendarSheCantEdit
