@@ -2,7 +2,7 @@ import AlarmKit
 import SwiftUI
 
 /// Arms one-shot AlarmKit alarms: titled with the Shift Type's name, tinted with its colour,
-/// with the default sound and only a Stop button, which runs Arming again.
+/// ringing its Tone or else the default sound, with only a Stop button, which runs Arming again.
 struct AlarmKitScheduler: AlarmScheduler {
     private var manager: AlarmManager { .shared }
 
@@ -27,7 +27,9 @@ struct AlarmKitScheduler: AlarmScheduler {
         )
         _ = try await manager.schedule(
             id: alarm.id,
-            configuration: .alarm(schedule: .fixed(alarm.instant), attributes: attributes, stopIntent: ArmShiftsIntent())
+            configuration: .alarm(
+                schedule: .fixed(alarm.instant), attributes: attributes, stopIntent: ArmShiftsIntent(),
+                sound: alarm.tone.map { .named($0.fileName) } ?? .default)
         )
     }
 

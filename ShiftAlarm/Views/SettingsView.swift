@@ -19,7 +19,7 @@ struct SettingsView: View {
                             ShiftTypeEditor(shiftType: shiftType)
                         } label: {
                             LabeledContent {
-                                Text(shiftType.alarmSet.summary)
+                                Text(shiftType.alarmSet.map(\.time).summary)
                                     .monospacedDigit()
                             } label: {
                                 Text(shiftType.name)

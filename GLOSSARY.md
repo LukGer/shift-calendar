@@ -20,6 +20,10 @@ _Avoid_: Code, abbreviation, tag
 The ordered group of alarms that belongs to one Shift Type.
 _Avoid_: Alarm group, alarm profile
 
+**Tone**:
+The sound one alarm of an Alarm Set rings with; the default sound unless she picks another.
+_Avoid_: Sound, ringtone
+
 **Arming**:
 The app scheduling the Alarm Set for an upcoming Shift, replacing the manual re-setting of alarms.
 _Avoid_: Syncing, activating

@@ -140,10 +140,10 @@ struct ArmingRunTests {
     }
 
     /// Expected IDs are RFC 4122 version-5 UUIDs computed independently (Python's `uuid.uuid5`)
-    /// in the app's namespace, from "<Shift date>|<Shift Type identity>|<alarm time>|<name>|<colour index>".
+    /// in the app's namespace, from "<Shift date>|<Shift Type identity>|<alarm time>|<name>|<colour index>|<Tone>".
     @Test(arguments: [
-        ("td", "2031-03-03", "05:00", "B3551C04-0792-556F-8698-0EE5B2995943"),
-        ("nd", "2031-03-04", "18:30", "C5DA0443-E779-5E1E-BECE-B11D49222A3A"),
+        ("td", "2031-03-03", "05:00", "37D505D1-02BA-5936-90DF-8B0D38B40878"),
+        ("nd", "2031-03-04", "18:30", "001EF98C-16D2-537C-A7AC-A4F6EBAC5D86"),
     ])
     func namesEachAlarmAfterItsShiftDateShiftTypeTimeAndLook(
         shortcut: String, date: String, time: String, expectedID: String
@@ -197,7 +197,7 @@ struct ArmingRunTests {
 
     @Test func cancelsLeftoverAlarmsFromAnEarlierInstall() async {
         let leftover = WantedAlarm(
-            id: UUID(), instant: Self.instant("2031-03-04 05:00"), title: "Tagdienst", tint: .orange)
+            id: UUID(), instant: Self.instant("2031-03-04 05:00"), title: "Tagdienst", tint: .orange, tone: nil)
         alarms.arm(leftover)
         addHerShiftTypes()
         roster(allDay("td", on: "2031-03-03"))
@@ -259,7 +259,7 @@ struct ArmingRunTests {
 
     @Test func keepsAnAlarmSetInTimeOrder() async {
         let tagdienst = addShiftType("Tagdienst", shortcut: "td", alarmSet: ["05:10", "04:50"])
-        tagdienst.replaceAlarmSet(with: [AlarmTime(hour: 5, minute: 20), AlarmTime(hour: 4, minute: 40)])
+        tagdienst.replaceAlarmSet(with: [Self.alarm("05:20"), Self.alarm("04:40")])
         roster(allDay("td", on: "2031-03-03"))
 
         let result = await arming.run()
@@ -283,7 +283,7 @@ struct ArmingRunTests {
     }
 
     @Test func aRunThatFailsReportsItAndLeavesTheStaleArmingNotificationAndLastArmedAlone() async {
-        alarms.arm(WantedAlarm(id: UUID(), instant: Self.instant("2031-03-04 05:00"), title: "Tagdienst", tint: .orange))
+        alarms.arm(WantedAlarm(id: UUID(), instant: Self.instant("2031-03-04 05:00"), title: "Tagdienst", tint: .orange, tone: nil))
         alarms.cancellingFails = true
 
         let result = await arming.run()
@@ -392,7 +392,7 @@ struct ArmingRunTests {
             calendarStore.eventsByCalendar["dienste"] = [allDay("hrn", on: "2031-03-03")]
         case .alarmTimeChanged:
             let tagdienst = try context.fetch(FetchDescriptor<ShiftType>()).first { $0.shortcut == "td" }
-            tagdienst?.replaceAlarmSet(with: [AlarmTime(hour: 4, minute: 45)])
+            tagdienst?.replaceAlarmSet(with: [Self.alarm("04:45")])
         case .shiftDeleted:
             calendarStore.eventsByCalendar["dienste"] = []
         case .calendarUnchosen:
@@ -445,7 +445,7 @@ struct ArmingRunTests {
         _ name: String, shortcut: String, alarmSet: [String], createdAt: String = "2031-01-01 00:00"
     ) -> ShiftType {
         let shiftType = try! container.mainContext.addShiftType(
-            name: name, shortcut: shortcut, alarmSet: alarmSet.map(Self.alarmTime))
+            name: name, shortcut: shortcut, alarmSet: alarmSet.map { Self.alarm($0) })
         shiftType.createdAt = Self.instant(createdAt)
         return shiftType
     }
@@ -495,8 +495,8 @@ struct ArmingRunTests {
         formatter.string(from: instant)
     }
 
-    static func alarmTime(_ text: String) -> AlarmTime {
+    static func alarm(_ text: String, tone: Tone? = nil) -> Alarm {
         let parts = text.split(separator: ":").map { Int($0)! }
-        return AlarmTime(hour: parts[0], minute: parts[1])
+        return Alarm(time: AlarmTime(hour: parts[0], minute: parts[1]), tone: tone)
     }
 }

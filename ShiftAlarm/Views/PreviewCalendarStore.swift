@@ -3,10 +3,10 @@ import SwiftUI
 /// A fake calendar for previews, holding a busy roster around today in her Shift Types: a double Shift tomorrow
 /// with one half Skipped, another double Shift, a Skipped Shift inside the Arming Window and one beyond it.
 struct PreviewCalendarStore: CalendarStore {
-    static let tagdienst = ShiftType(name: "Tagdienst", shortcut: "td", alarmSet: [.init(hour: 5, minute: 0)], colorIndex: 0)
-    static let nachtdienst = ShiftType(name: "Nachtdienst", shortcut: "nd", alarmSet: [.init(hour: 18, minute: 30)], colorIndex: 1)
-    static let hausrunde = ShiftType(name: "Hausrunde", shortcut: "hrn", alarmSet: [.init(hour: 6, minute: 15)], colorIndex: 2)
-    static let ambulanz = ShiftType(name: "Ambulanz", shortcut: "a11", alarmSet: [.init(hour: 9, minute: 0)], colorIndex: 3)
+    static let tagdienst = ShiftType(name: "Tagdienst", shortcut: "td", alarmSet: [Alarm(time: AlarmTime(hour: 5, minute: 0), tone: nil)], colorIndex: 0)
+    static let nachtdienst = ShiftType(name: "Nachtdienst", shortcut: "nd", alarmSet: [Alarm(time: AlarmTime(hour: 18, minute: 30), tone: nil)], colorIndex: 1)
+    static let hausrunde = ShiftType(name: "Hausrunde", shortcut: "hrn", alarmSet: [Alarm(time: AlarmTime(hour: 6, minute: 15), tone: nil)], colorIndex: 2)
+    static let ambulanz = ShiftType(name: "Ambulanz", shortcut: "a11", alarmSet: [Alarm(time: AlarmTime(hour: 9, minute: 0), tone: nil)], colorIndex: 3)
     static let spät = ShiftType(name: "Spät", shortcut: "e6", alarmSet: [], colorIndex: 4)
     static let shiftTypes = [tagdienst, nachtdienst, hausrunde, ambulanz, spät]
 

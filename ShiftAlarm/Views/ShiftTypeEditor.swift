@@ -13,6 +13,7 @@ struct ShiftTypeEditor: View {
     @State private var shortcut: String
     @State private var alarms: [EditableAlarm]
     @State private var pickedColorIndex: Int?
+    @State private var addedAlarmID: UUID?
 
     init(shiftType: ShiftType?, newShortcut: String = "") {
         self.shiftType = shiftType
@@ -42,19 +43,30 @@ struct ShiftTypeEditor: View {
             }
 
             Section {
-                ForEach($alarms) { $alarm in
-                    DatePicker("Alarm", selection: $alarm.time, displayedComponents: .hourAndMinute)
-                }
-                .onDelete { alarms.remove(atOffsets: $0) }
-                Button("Add Alarm", systemImage: "plus") {
-                    withAnimation {
-                        alarms.append(EditableAlarm(AlarmTime(hour: 6, minute: 0)))
+                ForEach(alarms) { row in
+                    NavigationLink {
+                        alarmEditor(for: row.id)
+                    } label: {
+                        LabeledContent {
+                            Text(row.alarm.tone.name)
+                        } label: {
+                            Text(row.alarm.time.text)
+                                .monospacedDigit()
+                        }
                     }
                 }
+                .onDelete { alarms.remove(atOffsets: $0) }
+                Button("Add Alarm", systemImage: "plus", action: addAlarm)
+                    .disabled(alarms.last?.alarm.time == .lastOfDay)
             } header: {
                 Text("Alarm Set")
             } footer: {
-                Text("Rings on the Shift's date. Leave empty to ring nothing.")
+                if let sharedTime {
+                    Text("Two alarms ring at \(sharedTime.text).")
+                        .foregroundStyle(.red)
+                } else {
+                    Text("Rings on the Shift's date. Leave empty to ring nothing.")
+                }
             }
 
             if let shiftType {
@@ -64,10 +76,11 @@ struct ShiftTypeEditor: View {
             }
         }
         .navigationTitle(name.trimmed.isEmpty ? String(localized: "New Shift Type") : name.trimmed)
+        .navigationDestination(item: $addedAlarmID) { alarmEditor(for: $0) }
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save", action: save)
-                    .disabled(name.trimmed.isEmpty || shortcut.trimmed.isEmpty || isShortcutTaken)
+                    .disabled(name.trimmed.isEmpty || shortcut.trimmed.isEmpty || isShortcutTaken || sharedTime != nil)
             }
         }
     }
@@ -88,6 +101,32 @@ struct ShiftTypeEditor: View {
         Binding { pickedColorIndex ?? shiftTypes.nextColorIndex } set: { pickedColorIndex = $0 }
     }
 
+    /// A time two alarms share, which would ring only one of their Tones.
+    private var sharedTime: AlarmTime? {
+        zip(alarms, alarms.dropFirst()).first { $0.alarm.time == $1.alarm.time }?.0.alarm.time
+    }
+
+    /// A new alarm rings 10 minutes after the last one, on the default sound, and opens at once.
+    private func addAlarm() {
+        let time = alarms.last?.alarm.time.adding(minutes: 10) ?? AlarmTime(hour: 6, minute: 0)
+        let added = EditableAlarm(Alarm(time: time, tone: nil))
+        withAnimation {
+            alarms.append(added)
+        }
+        addedAlarmID = added.id
+    }
+
+    /// Edits the alarm by its identity, and keeps the Alarm Set in time order as its time changes.
+    private func alarmEditor(for id: UUID) -> AlarmEditor {
+        AlarmEditor(alarm: Binding {
+            alarms.first { $0.id == id }!.alarm
+        } set: { alarm in
+            guard let index = alarms.firstIndex(where: { $0.id == id }) else { return }
+            alarms[index].alarm = alarm
+            alarms.sort { $0.alarm.time < $1.alarm.time }
+        })
+    }
+
     private var isShortcutTaken: Bool {
         shiftTypes.contains {
             $0.id != shiftType?.id && $0.shortcut.trimmedAndLowercased == shortcut.trimmedAndLowercased
@@ -95,7 +134,7 @@ struct ShiftTypeEditor: View {
     }
 
     private func save() {
-        let alarmSet = alarms.map { AlarmTime(of: $0.time, calendar: .current) }
+        let alarmSet = alarms.map(\.alarm)
         if let shiftType {
             shiftType.name = name.trimmed
             shiftType.shortcut = shortcut
@@ -155,17 +194,17 @@ private struct ColorSwatches: View {
 /// One row of the Alarm Set while it's being edited. Its own identity keeps the row steady while its time changes.
 private struct EditableAlarm: Identifiable {
     let id = UUID()
-    var time: Date
+    var alarm: Alarm
 
-    init(_ alarmTime: AlarmTime) {
-        time = alarmTime.instant(on: .now, calendar: .current)
+    init(_ alarm: Alarm) {
+        self.alarm = alarm
     }
 }
 
 #Preview("Picked colour") {
     let container = try! ModelContainer(for: ShiftType.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
     let nachtdienst = try! container.mainContext.addShiftType(
-        name: "Nachtdienst", shortcut: "nd", alarmSet: [AlarmTime(hour: 18, minute: 30)], colorIndex: 5)
+        name: "Nachtdienst", shortcut: "nd", alarmSet: [Alarm(time: AlarmTime(hour: 18, minute: 30), tone: .cheerful)], colorIndex: 5)
     NavigationStack {
         ShiftTypeEditor(shiftType: nachtdienst)
     }

@@ -9,7 +9,7 @@ extension ArmingRunTests {
     func aNewShiftTypeGetsThePickedColourOrElseTheNextOne(picked: Int?, tint: Color) async throws {
         addShiftType("Hausrunde", shortcut: "hrn", alarmSet: [])
         try container.mainContext.addShiftType(
-            name: "Tagdienst", shortcut: "td", alarmSet: [Self.alarmTime("05:00")], colorIndex: picked)
+            name: "Tagdienst", shortcut: "td", alarmSet: [Self.alarm("05:00")], colorIndex: picked)
         roster(allDay("td", on: "2031-03-03"))
 
         await arming.run()

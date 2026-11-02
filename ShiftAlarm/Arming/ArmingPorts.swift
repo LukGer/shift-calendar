@@ -56,4 +56,5 @@ struct WantedAlarm: Equatable {
     let instant: Date
     let title: String
     let tint: Color
+    let tone: Tone?
 }

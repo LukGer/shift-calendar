@@ -79,6 +79,16 @@
         }
       }
     },
+    "Alarm Clock": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Klingelwecker"
+          }
+        }
+      }
+    },
     "Alarm Set": {
       "localizations": {
         "de": {
@@ -235,6 +245,16 @@
         }
       }
     },
+    "Birdsong": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vogelgezwitscher"
+          }
+        }
+      }
+    },
     "Calendar access": {
       "localizations": {
         "de": {
@@ -251,6 +271,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Kalender"
+          }
+        }
+      }
+    },
+    "Cheerful": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fröhlich"
           }
         }
       }
@@ -301,6 +331,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "An Tagen ohne Dienst klingelt nichts."
+          }
+        }
+      }
+    },
+    "Default": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Standard"
           }
         }
       }
@@ -381,6 +421,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Falls deine Wecker nicht mehr gestellt werden, kann Kathlender dich nicht warnen. Erlaube Mitteilungen in den Einstellungen."
+          }
+        }
+      }
+    },
+    "Kalimba": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Kalimba"
           }
         }
       }
@@ -863,6 +913,16 @@
         }
       }
     },
+    "Time": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Uhrzeit"
+          }
+        }
+      }
+    },
     "Today": {
       "localizations": {
         "de": {
@@ -879,6 +939,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Morgen"
+          }
+        }
+      }
+    },
+    "Tone": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ton"
+          }
+        }
+      }
+    },
+    "Two alarms ring at %@.": {
+      "localizations": {
+        "de": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Zwei Wecker klingeln um %@."
           }
         }
       }
