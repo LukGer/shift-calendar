@@ -140,16 +140,17 @@ struct ArmingRunTests {
     }
 
     /// Expected IDs are RFC 4122 version-5 UUIDs computed independently (Python's `uuid.uuid5`)
-    /// in the app's namespace, from "<Shift date>|<Shift Type identity>|<alarm time>".
+    /// in the app's namespace, from "<Shift date>|<Shift Type identity>|<alarm time>|<name>|<colour index>".
     @Test(arguments: [
-        ("td", "2031-03-03", "05:00", "82C5E6E3-AD1E-5C50-8D42-5E2689A6D2D7"),
-        ("nd", "2031-03-04", "18:30", "11A9EA51-573A-556E-9C4F-3C659FEC817E"),
+        ("td", "2031-03-03", "05:00", "B3551C04-0792-556F-8698-0EE5B2995943"),
+        ("nd", "2031-03-04", "18:30", "C5DA0443-E779-5E1E-BECE-B11D49222A3A"),
     ])
-    func namesEachAlarmAfterItsShiftDateShiftTypeAndTime(
+    func namesEachAlarmAfterItsShiftDateShiftTypeTimeAndLook(
         shortcut: String, date: String, time: String, expectedID: String
     ) async {
         let shiftType = addShiftType("Dienst", shortcut: shortcut, alarmSet: [time])
         shiftType.id = UUID(uuidString: "6F1C5B0E-2D3A-4C8B-9E7F-1A2B3C4D5E6F")!
+        shiftType.colorIndex = 0
         roster(allDay(shortcut, on: date))
 
         await arming.run()

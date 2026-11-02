@@ -36,11 +36,15 @@ struct ArmingPlan {
 
     private static let alarmIDNamespace = UUID(uuidString: "AF661BC3-756B-422B-A25D-214AE9848CDC")!
 
-    /// Changing the Shift's date, its Shift Type or the alarm time gives a new ID, so an armed ID never needs rescheduling.
+    /// Changing the Shift's date, its Shift Type, the alarm time or how the alarm looks gives a new ID,
+    /// so an armed ID never needs rescheduling.
     private static func alarmID(for shift: Shift, at time: AlarmTime, calendar: Calendar) -> UUID {
         let day = calendar.dateComponents([.year, .month, .day], from: shift.date)
         let date = String(format: "%04d-%02d-%02d", day.year!, day.month!, day.day!)
-        return UUID(name: "\(date)|\(shift.shiftType.id.uuidString)|\(time.text)", namespace: alarmIDNamespace)
+        let shiftType = shift.shiftType
+        return UUID(
+            name: "\(date)|\(shiftType.id.uuidString)|\(time.text)|\(shiftType.name)|\(shiftType.colorIndex)",
+            namespace: alarmIDNamespace)
     }
 }
 
