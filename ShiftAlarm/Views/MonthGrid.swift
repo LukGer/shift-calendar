@@ -105,7 +105,8 @@ private struct MonthPage<DayMenu: View>: View {
     }
 }
 
-/// The day's number, then its Shifts sharing the space below it. A Shift slides in from the bottom when it's planned.
+/// The day's number, then its Shifts sharing the space below it. A Shift slides in from the bottom when it's planned,
+/// and the first of several slides out of the top, so the Shifts beside it grow into its space without crossing it.
 private struct DayCell: View {
     let day: GridDay
 
@@ -113,9 +114,9 @@ private struct DayCell: View {
         VStack(spacing: 2) {
             dayNumber
             VStack(spacing: 0) {
-                ForEach(day.shifts, id: \.shiftType.id) { shift in
+                ForEach(Array(day.shifts.enumerated()), id: \.element.shiftType.id) { index, shift in
                     ShiftTile(shift: shift)
-                        .transition(.move(edge: .bottom))
+                        .transition(.move(edge: index == 0 && day.shifts.count > 1 ? .top : .bottom))
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
